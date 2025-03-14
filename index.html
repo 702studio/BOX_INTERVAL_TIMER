@@ -1,0 +1,1422 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIGHTING INTERVAL TIMER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1A1A1A;
+            color: white;
+        }
+        
+        /* Progress circle tasarımı */
+        .timer-circle-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        
+        .timer-circle-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px solid #121212;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        /* İçe doğru ışıma efekti için arka plan katmanı */
+        .timer-circle-bg::after {
+            display: none; /* İçe doğru ışıma efektini gizliyorum */
+        }
+        
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* SVG Filtreler */
+        svg {
+            --progress-color: #ff4444;
+        }
+        
+        /* Progress çizgisi */
+        .progress-ring__circle {
+            fill: transparent;
+            stroke: var(--progress-color);
+            stroke-width: 3;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: none;
+        }
+        
+        /* İç ışıma dairesi (daha büyük fill değeri) */
+        .progress-ring-inner-glow {
+            display: none; /* İç ışıma dairesini gizliyorum */
+        }
+        
+        /* İkinci iç ışıma katmanı (daha yoğun) */
+        .progress-ring-inner-glow-intense {
+            display: none; /* İkinci iç ışıma katmanını gizliyorum */
+        }
+        
+        /* Eski stil tanımları */
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #333333;
+            outline: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 6px 1px rgba(240, 240, 240, 0.3);
+        }
+        .slider::-webkit-slider-thumb:hover {
+            background: #ff4444;
+            box-shadow: 0 0 10px 2px rgba(255, 68, 68, 0.7);
+            transform: scale(1.1);
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 6px 1px rgba(240, 240, 240, 0.3);
+        }
+        .slider::-moz-range-thumb:hover {
+            background: #ff4444;
+            box-shadow: 0 0 10px 2px rgba(255, 68, 68, 0.7);
+            transform: scale(1.1);
+        }
+        .slider::-ms-thumb {
+            width: 20px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 6px 1px rgba(240, 240, 240, 0.3);
+        }
+        .slider::-ms-thumb:hover {
+            background: #ff4444;
+            box-shadow: 0 0 10px 2px rgba(255, 68, 68, 0.7);
+            transform: scale(1.1);
+        }
+        .snap-point-labels {
+            display: flex;
+            position: relative;
+            height: 24px;
+            margin-top: 8px;
+            padding: 0;
+            width: calc(100% - 66px); /* Butonların genişliğini çıkar (30px + gap 8px) * 2 - 2px margin */
+            margin-left: 34px; /* Sol butonun genişliği + gap */
+            overflow: visible;
+        }
+        .bg-custom {
+            background-color: #1A1A1A;
+        }
+        @keyframes glow {
+            0% { filter: drop-shadow(0 0 2px rgba(255, 68, 68, 0.6)); }
+            50% { filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.7)); }
+            100% { filter: drop-shadow(0 0 2px rgba(255, 68, 68, 0.6)); }
+        }
+        .glow {
+            animation: glow 2s infinite;
+        }
+        .custom-hover\:border {
+            border: none;
+        }
+        .custom-hover\:border:hover {
+            border: 2px solid #ff4444;
+            box-shadow: inset 0 0 10px 2px rgba(255, 68, 68, 0.7);
+        }
+        .custom-hover\:stroke {
+            transition: all 0.3s ease;
+        }
+        .custom-hover\:stroke:hover {
+            transform: translateY(-1px);
+        }
+        .hover-stroke {
+            position: relative;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        .hover-stroke:hover {
+            box-shadow: inset 0 0 8px 1px rgba(255, 68, 68, 0.5);
+        }
+        .hover-stroke::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .hover-stroke:hover::before {
+            border: 2px solid #ff4444;
+            box-shadow: inset 0 0 8px 2px rgba(255, 68, 68, 0.5);
+        }
+        
+        /* Button styles - Daha net ve kesin kontroller */
+        .button {
+            transition: all 0.3s ease;
+            outline: none !important;
+            transform: none !important; /* Butonun büyümesini tamamen engelle */
+            height: 40px; /* Sabit yükseklik */
+            line-height: 20px; /* İçerik dikey ortalama */
+            box-sizing: border-box; /* border'ın boyuta dahil olmasını sağla */
+        }
+        
+        .button:active {
+            transform: none !important; /* Aktif durumda bile büyümeyi engelle */
+            box-shadow: inset 0 0 12px 3px rgba(255, 68, 68, 0.4) !important;
+        }
+        
+        /* Sadece içe doğru ışıyan saber glow efekti */
+        .saber-glow {
+            position: relative;
+            transition: all 0.3s ease;
+            transform: none !important; /* Büyümeyi engelle */
+            border: none !important; /* Border'ı kaldır */
+        }
+        
+        .saber-glow:hover {
+            /* background-color: #484848; */ /* Hover durumunda bg değişimini kaldırdım */
+            box-shadow: inset 0 0 10px 2px rgba(255, 68, 68, 0.4);
+            transform: none !important; /* Hover durumunda bile büyümeyi engelle */
+        }
+        
+        .saber-glow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid transparent;
+            background: transparent;
+            box-shadow: inset 0 0 10px 2px rgba(255, 68, 68, 0.3);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .saber-glow:hover::after {
+            opacity: 1;
+            border-color: rgba(255, 68, 68, 0.4);
+        }
+        
+        /* Aktif buton için özel stil */
+        .active-button {
+            background-color: #484848 !important;
+            box-shadow: inset 0 0 12px 3px rgba(255, 68, 68, 0.4) !important;
+            transform: none !important; /* Active durumunda bile büyümeyi engelle */
+            border: none !important; /* Border'ı kesinlikle kaldır */
+        }
+
+        /* Yeni slider tasarımı */
+        .slider-container {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .slider-with-buttons {
+            display: grid;
+            grid-template-columns: 30px 1fr 30px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%));
+            outline: none;
+            border-radius: 3px;
+            cursor: pointer;
+            grid-column: 2;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 6px 1px rgba(240, 240, 240, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: #ff4444;
+            box-shadow: 0 0 10px 2px rgba(255, 68, 68, 0.7);
+            transform: scale(1.1);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 6px 1px rgba(240, 240, 240, 0.3);
+            border: none;
+            z-index: 2;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            background: #ff4444;
+            box-shadow: 0 0 10px 2px rgba(255, 68, 68, 0.7);
+            transform: scale(1.1);
+        }
+
+        .slider::-moz-range-progress {
+            background-color: #ff4444;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        /* Snap point etiketleri için düzenlenmiş CSS */
+        .snap-point-labels {
+            display: flex;
+            position: relative;
+            height: 24px;
+            margin-top: 8px;
+            padding: 0;
+            width: calc(100% - 66px); /* Butonların genişliğini çıkar (30px + gap 8px) * 2 - 2px margin */
+            margin-left: 34px; /* Sol butonun genişliği + gap */
+            overflow: visible;
+        }
+
+        .snap-point-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: #666;
+            padding: 2px 3px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            text-align: center;
+            min-width: 20px;
+        }
+
+        .snap-point-label:hover, .snap-point-label.active {
+            color: #ff4444;
+            background-color: rgba(255, 68, 68, 0.1);
+        }
+
+        /* Slider butonlarının düzenlenmiş CSS */
+        .slider-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #404040;
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+            z-index: 10;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .slider-btn.minus {
+            grid-column: 1;
+        }
+
+        .slider-btn.plus {
+            grid-column: 3;
+        }
+
+        .slider-btn:hover {
+            background-color: #555;
+            box-shadow: 0 0 6px rgba(255, 68, 68, 0.5);
+        }
+
+        .slider-btn:active {
+            transform: scale(0.95);
+            background-color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .slider::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+            .slider::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+            }
+            .slider {
+                height: 8px;
+            }
+        }
+
+        /* Slider için tick markerları */
+        .slider {
+            --slider-track-height: 6px;
+            --slider-value: 50%;
+        }
+
+        /* Preset butonları için stil */
+        .presets-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .preset-btn {
+            background-color: #333;
+            color: #888;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 36px;
+            text-align: center;
+        }
+        
+        .preset-btn:hover {
+            background-color: #444;
+            color: #ccc;
+        }
+        
+        .preset-btn.active {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body class="font-jetbrains bg-custom">
+    <div class="container mx-auto px-4 py-4 md:py-8 max-w-xl flex justify-center">
+        <div class="bg-custom rounded-2xl shadow-lg p-4 md:p-6 lg:p-8 border border-gray-700 w-full">
+            <h1 class="text-3xl md:text-4xl font-normal text-white mb-6 md:mb-8 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+            
+            <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto mb-6 md:mb-8 aspect-square">
+                <!-- SVG Progress Circle -->
+                <div class="timer-circle-container">
+                    <div id="timer-circle-bg" class="timer-circle-bg"></div>
+                    <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 384 384" style="overflow: visible;">
+                        <!-- SVG Filtreler -->
+                        <defs>
+                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                        
+                        <!-- Ana progress çemberi -->
+                        <circle
+                            class="progress-ring__circle"
+                            id="progress-ring-circle"
+                            stroke="#ff4444" 
+                            stroke-width="3"
+                            fill="transparent"
+                            r="190"
+                            cx="192"
+                            cy="192"
+                            stroke-dasharray="1193.8"
+                            stroke-dashoffset="0"
+                            filter="url(#glow)"
+                        />
+                    </svg>
+                </div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center space-y-1 md:space-y-2">
+                    <span id="timer-status" class="text-xl md:text-2xl font-normal uppercase">GET READY</span>
+                    <span id="timer" class="text-6xl md:text-7xl lg:text-8xl font-bold">03:00</span>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs md:text-sm uppercase">ROUND</span>
+                        <span id="round-info" class="text-xl md:text-2xl font-normal mt-1">01/03</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-row gap-0">
+                <button id="start" class="flex-1 px-4 py-2 bg-[#404040] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
+                    START
+                </button>
+                <button id="reset" class="flex-1 px-4 py-2 bg-[#333333] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
+                    RESET
+                </button>
+            </div>
+            <div class="text-center">
+                <button id="settingsBtn" class="w-full px-4 py-2 bg-[#262626] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
+                    SETTINGS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-custom p-6 rounded-xl w-full max-w-sm border border-gray-700">
+                <h2 class="text-xl font-bold mb-6 uppercase">SETTINGS</h2>
+                <div class="space-y-6">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">ROUND DURATION</label>
+                            <span id="roundDurationValue" class="text-right ml-2">03:00</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="roundMinus">-</button>
+                                <input type="range" id="roundDuration" class="slider" min="5" max="360" step="5" value="180">
+                                <button class="slider-btn plus" id="roundPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="roundPresets"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">REST DURATION</label>
+                            <span id="restDurationValue" class="text-right ml-2">01:00</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="restMinus">-</button>
+                                <input type="range" id="restDuration" class="slider" min="5" max="120" step="5" value="60">
+                                <button class="slider-btn plus" id="restPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="restPresets"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">PREP DURATION</label>
+                            <span id="prepDurationValue" class="text-right ml-2">5s</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="prepMinus">-</button>
+                                <input type="range" id="prepDuration" class="slider" min="3" max="30" step="1" value="5">
+                                <button class="slider-btn plus" id="prepPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="prepPresets"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">TOTAL ROUNDS</label>
+                            <span id="totalRoundsValue" class="text-right ml-2">03</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="roundsMinus">-</button>
+                                <input type="range" id="totalRounds" class="slider" min="1" max="15" step="1" value="3">
+                                <button class="slider-btn plus" id="roundsPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="roundsPresets"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-between gap-0">
+                    <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
+                        CANCEL
+                    </button>
+                    <button id="saveSettings" class="flex-1 px-4 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button uppercase">
+                        SAVE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timer;
+        let timeLeft;
+        let isRunning = false;
+        let currentRound = 1;
+        let isWork = false;
+        let isPreparation = true;
+
+        let roundDuration = 180;
+        let restDuration = 60;
+        let prepDuration = 5; // GET READY süresi için yeni değişken
+        let totalRounds = 3;
+        
+        // Zamanlama için milisaniye cinsinden değerler
+        let totalDurationMs = 0;
+        let timeLeftMs = 0;
+        let lastUpdateTime = 0;
+
+        timeLeft = roundDuration;
+        
+        const timerElement = document.getElementById('timer');
+        const statusElement = document.getElementById('timer-status');
+        const roundElement = document.getElementById('round-info');
+        
+        // SVG Progress Circle
+        const circle = document.getElementById('progress-ring-circle');
+        const radius = 190;
+        const circumference = 2 * Math.PI * radius;
+        
+        // SVG çember için başlangıç değerleri
+        circle.style.strokeDasharray = circumference;
+        circle.style.strokeDashoffset = 0;
+        
+        // Ekran güncelleme fonksiyonu - sayacın değerini ve ilerleme çubuğunu günceller
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            roundElement.textContent = ` ${currentRound.toString().padStart(2, '0')} / ${totalRounds.toString().padStart(2, '0')}`;
+        }
+        
+        // İlerleme çemberini gerçek-zamanlı animasyon ile hareket ettir
+        let animationId = null;
+        let glowFilter = null;
+
+        function startProgressAnimation() {
+            // Toplam süreyi belirle (milisaniye)
+            totalDurationMs = isPreparation ? prepDuration * 1000 : (isWork ? roundDuration * 1000 : restDuration * 1000);
+            
+            // Kalan süreyi milisaniye olarak ayarla
+            timeLeftMs = timeLeft * 1000;
+            
+            // İlk çağrıda başlangıç zamanını kaydet
+            lastUpdateTime = performance.now();
+            
+            // Varsa önceki animasyonu durdur
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            // SVG filtreyi oluştur
+            glowFilter = document.querySelector('#glow feGaussianBlur');
+            
+            // Sürekli animasyon fonksiyonu
+            function animate(timestamp) {
+                if (!isRunning) return;
+                
+                // Başlangıçtan bu yana geçen süreyi hesapla
+                const elapsed = timestamp - lastUpdateTime;
+                lastUpdateTime = timestamp;
+                
+                // Kalan süreyi azalt
+                timeLeftMs = Math.max(0, timeLeftMs - elapsed);
+                
+                // İlerleme yüzdesini hesapla (0-100 arası)
+                const percent = (timeLeftMs / totalDurationMs) * 100;
+                
+                // Süre görüntüsünü yalnızca saniye değiştiğinde güncelle (performans için)
+                const newTimeLeft = Math.ceil(timeLeftMs / 1000);
+                if (newTimeLeft !== timeLeft) {
+                    timeLeft = newTimeLeft;
+                    updateDisplay();
+                }
+                
+                // Progress çemberini ayarla
+                const offset = circumference * (1 - percent / 100);
+                circle.style.strokeDashoffset = offset;
+                
+                // Son 30 saniye kaldıysa yanıp sönme efektini artır
+                if (!isPreparation && timeLeftMs <= 30000) {
+                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '6');
+                } else {
+                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '4');
+                }
+                
+                // Yeni frame için kendini tekrar çağır
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            // Animasyonu başlat
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function stopProgressAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+        
+        function resetProgress() {
+            circle.style.strokeDashoffset = 0;
+        }
+
+        function updateDisplayValue(sliderId, displayId) {
+            const slider = document.getElementById(sliderId);
+            const display = document.getElementById(displayId);
+            
+            if (sliderId === 'roundDuration') {
+                const minutes = Math.floor(roundDuration / 60);
+                const seconds = roundDuration % 60;
+                display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else if (sliderId === 'restDuration') {
+                const minutes = Math.floor(restDuration / 60);
+                const seconds = restDuration % 60;
+                display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else if (sliderId === 'prepDuration') {
+                display.textContent = `${slider.value}s`;
+            } else {
+                display.textContent = slider.value.toString().padStart(2, '0');
+            }
+        }
+
+        function showSettings() {
+            document.getElementById('settingsModal').classList.toggle('hidden');
+            updateDisplayValue('roundDuration', 'roundDurationValue');
+            updateDisplayValue('restDuration', 'restDurationValue');
+            updateDisplayValue('prepDuration', 'prepDurationValue');
+            updateDisplayValue('totalRounds', 'totalRoundsValue');
+        }
+
+        function toggleTimer() {
+            if (!isRunning) {
+                startTimer();
+            } else {
+                stopTimer();
+            }
+        }
+        
+        function startTimer() {
+            isRunning = true;
+            document.getElementById('start').textContent = 'PAUSE';
+            document.getElementById('start').classList.add('active-button');
+            
+            // Hazırlık aşamasındaysak
+            if (isPreparation) {
+                timeLeft = prepDuration; // Kullanıcının ayarladığı hazırlık süresi
+                updateDisplay();
+            }
+            
+            // Pürüzsüz animasyonu başlat
+            startProgressAnimation();
+            
+            // Saniye timerı
+            timer = setInterval(countdown, 1000);
+        }
+        
+        function countdown() {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                stopProgressAnimation();
+                isRunning = false;
+                document.getElementById('start').textContent = 'START';
+                document.getElementById('start').classList.remove('active-button');
+                
+                if (isPreparation) {
+                    isPreparation = false;
+                    isWork = true;
+                    timeLeft = roundDuration;
+                    statusElement.textContent = "WORK";
+                    updateDisplay();
+                    startTimer();
+                } else if (isWork) {
+                    document.getElementById('notificationSound').play();
+                    
+                    if (currentRound < totalRounds) {
+                        currentRound++;
+                        isWork = false;
+                        timeLeft = restDuration;
+                        statusElement.textContent = "REST";
+                        updateDisplay();
+                        startTimer();
+                    } else {
+                        statusElement.textContent = "FINISHED";
+                        resetProgress();
+                        document.getElementById('notificationSound').play();
+                    }
+                } else {
+                    isWork = true;
+                    timeLeft = roundDuration;
+                    statusElement.textContent = "WORK";
+                    updateDisplay();
+                    startTimer();
+                }
+            }
+            // Saniye eksilmeyi artık animation loop kendi yapıyor, burada yapmıyoruz
+        }
+
+        function stopTimer() {
+            isRunning = false;
+            document.getElementById('start').textContent = 'START';
+            document.getElementById('start').classList.remove('active-button');
+            clearInterval(timer);
+            stopProgressAnimation();
+        }
+
+        function resetTimer() {
+            stopTimer();
+            isRunning = false;
+            currentRound = 1;
+            isWork = false;
+            isPreparation = true;
+            timeLeft = roundDuration;
+            document.getElementById('start').textContent = 'START';
+            statusElement.textContent = "GET READY";
+            resetProgress();
+            updateDisplay();
+        }
+
+        // Sayfa yüklendiğinde ilk durumu ayarla
+        document.addEventListener('DOMContentLoaded', function() {
+            resetProgress();
+            updateDisplay();
+            
+            // Slider'ları ayarla
+            setupSliders();
+            
+            // Yeni butonları da ayarla
+            setupExtraButtons();
+            
+            // Presetleri oluştur
+            setTimeout(() => {
+                createPresets('roundPresets', [60, 120, 180, 240, 300], roundDuration, 'roundDuration'); // 1m, 2m, 3m, 4m, 5m
+                createPresets('restPresets', [30, 45, 60, 90], restDuration, 'restDuration'); // 30s, 45s, 60s, 90s
+                createPresets('prepPresets', [5, 10, 15, 30], prepDuration, 'prepDuration'); // 5s, 10s, 15s, 30s
+                createPresets('roundsPresets', [3, 5, 8, 10, 12, 15], totalRounds, 'totalRounds'); // 3, 5, 8, 10, 12, 15
+            }, 100);
+            
+            // Pencere yeniden boyutlandırıldığında etiketleri yenile
+            window.addEventListener('resize', function() {
+                // Minimal gecikme ile etiketleri yeniden oluştur
+                setTimeout(function() {
+                    createPresets('roundPresets', [60, 120, 180, 240, 300], roundDuration, 'roundDuration');
+                    createPresets('restPresets', [30, 45, 60, 90], restDuration, 'restDuration');
+                    createPresets('prepPresets', [5, 10, 15, 30], prepDuration, 'prepDuration');
+                    createPresets('roundsPresets', [3, 5, 8, 10, 12, 15], totalRounds, 'totalRounds');
+                }, 100);
+            });
+            
+            // Mobil cihazlar için ekran yönlendirmesi
+            if ('orientation' in screen) {
+                screen.orientation.lock('portrait').catch(function(error) {
+                    // Bazı tarayıcılar bu API'yi desteklemeyebilir, sessizce devam et
+                    console.log('Orientation lock failed: ', error);
+                });
+            }
+        });
+        
+        document.getElementById('start').addEventListener('click', toggleTimer);
+        document.getElementById('reset').addEventListener('click', resetTimer);
+        document.getElementById('settingsBtn').addEventListener('click', showSettings);
+        
+        document.getElementById('roundDuration').addEventListener('input', function() {
+            updateDisplayValue('roundDuration', 'roundDurationValue');
+        });
+        document.getElementById('restDuration').addEventListener('input', function() {
+            updateDisplayValue('restDuration', 'restDurationValue');
+        });
+        document.getElementById('prepDuration').addEventListener('input', function() {
+            updateDisplayValue('prepDuration', 'prepDurationValue');
+        });
+        document.getElementById('totalRounds').addEventListener('input', function() {
+            updateDisplayValue('totalRounds', 'totalRoundsValue');
+        });
+
+        document.getElementById('saveSettings').addEventListener('click', function() {
+            // Round Duration ve Rest Duration değerleri zaten input eventlerinde ayarlanıyor
+            prepDuration = parseInt(document.getElementById('prepDuration').value);
+            totalRounds = parseInt(document.getElementById('totalRounds').value);
+            resetTimer();
+            document.getElementById('settingsModal').classList.add('hidden');
+        });
+
+        document.getElementById('cancelSettings').addEventListener('click', function() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        });
+
+        // Slider snap fonksiyonu ve değerlerinin ayarlanması
+        function setupSliders() {
+            // Preset değerlerini güncelle
+            const snapValues = [60, 120, 180, 240, 300]; // 1m, 2m, 3m, 4m, 5m
+            const restSnapValues = [30, 45, 60, 90]; // 30s, 45s, 60s, 90s
+            const prepSnapValues = [5, 10, 15, 30]; // 5s, 10s, 15s, 30s
+            const roundsSnapValues = [3, 5, 8, 10, 12, 15]; // 3, 5, 8, 10, 12, 15
+            
+            // Yakınlık eşiği (saniye) - bu değerden daha yakınsa değere snap eder
+            const snapThreshold = 10; // 10 saniyeden daha yakınsa snap
+            const prepSnapThreshold = 1; // 1 saniyeden daha yakınsa snap
+            const roundsSnapThreshold = 2; // 2 rounddan daha yakınsa snap
+            
+            // Round Duration slider ayarları
+            setupRoundDurationSlider(snapValues, snapThreshold);
+            
+            // Rest Duration slider ayarları
+            setupRestDurationSlider(restSnapValues, snapThreshold);
+            
+            // Prep Duration slider ayarları
+            setupPrepDurationSlider(prepSnapValues, prepSnapThreshold);
+            
+            // Total Rounds slider ayarları
+            setupTotalRoundsSlider(roundsSnapValues, roundsSnapThreshold);
+            
+            // Başlangıç değerlerini ayarla
+            roundDuration = parseInt(document.getElementById('roundDuration').value);
+            restDuration = parseInt(document.getElementById('restDuration').value);
+            prepDuration = parseInt(document.getElementById('prepDuration').value);
+            totalRounds = parseInt(document.getElementById('totalRounds').value);
+            
+            // Değerleri göster
+            updateDisplayValue('roundDuration', 'roundDurationValue');
+            updateDisplayValue('restDuration', 'restDurationValue');
+            updateDisplayValue('prepDuration', 'prepDurationValue');
+            updateDisplayValue('totalRounds', 'totalRoundsValue');
+        }
+
+        // Round Duration slider'ını ayarla
+        function setupRoundDurationSlider(snapValues, snapThreshold) {
+            const slider = document.getElementById('roundDuration');
+            const minus = document.getElementById('roundMinus');
+            const plus = document.getElementById('roundPlus');
+            
+            // Slider dolum rengini ayarla
+            updateSliderFill(slider, 5, 360);
+            
+            // Değer değiştiğinde 
+            slider.addEventListener('input', function() {
+                roundDuration = parseInt(this.value);
+                updateDisplayValue('roundDuration', 'roundDurationValue');
+                updateSliderFill(this, 5, 360);
+                
+                // Preset butonlarını güncelle
+                updateActivePreset('roundPresets', roundDuration);
+            });
+            
+            // Değer bırakıldığında snap işlemi yap
+            slider.addEventListener('change', function() {
+                const value = parseInt(this.value);
+                
+                // En yakın snap değerini bul
+                let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
+                
+                if (closestSnap !== null) {
+                    roundDuration = closestSnap;
+                    this.value = closestSnap;
+                } else {
+                    roundDuration = value;
+                }
+                
+                updateDisplayValue('roundDuration', 'roundDurationValue');
+                updateSliderFill(this, 5, 360);
+            });
+            
+            // Düğme kontrolleri
+            minus.addEventListener('click', function() {
+                if (roundDuration > 5) {
+                    roundDuration = Math.max(5, roundDuration - 5);
+                    slider.value = roundDuration;
+                    updateDisplayValue('roundDuration', 'roundDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundPresets', roundDuration);
+                }
+            });
+            
+            plus.addEventListener('click', function() {
+                if (roundDuration < 360) {
+                    roundDuration = Math.min(360, roundDuration + 5);
+                    slider.value = roundDuration;
+                    updateDisplayValue('roundDuration', 'roundDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundPresets', roundDuration);
+                }
+            });
+        }
+
+        // Rest Duration slider'ını ayarla
+        function setupRestDurationSlider(snapValues, snapThreshold) {
+            const slider = document.getElementById('restDuration');
+            const minus = document.getElementById('restMinus');
+            const plus = document.getElementById('restPlus');
+            
+            // Slider dolum rengini ayarla
+            updateSliderFill(slider, 5, 120);
+            
+            // Değer değiştiğinde 
+            slider.addEventListener('input', function() {
+                restDuration = parseInt(this.value);
+                updateDisplayValue('restDuration', 'restDurationValue');
+                updateSliderFill(this, 5, 120);
+                
+                // Preset butonlarını güncelle
+                updateActivePreset('restPresets', restDuration);
+            });
+            
+            // Değer bırakıldığında snap işlemi yap
+            slider.addEventListener('change', function() {
+                const value = parseInt(this.value);
+                
+                // En yakın snap değerini bul
+                let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
+                
+                if (closestSnap !== null) {
+                    restDuration = closestSnap;
+                    this.value = closestSnap;
+                } else {
+                    restDuration = value;
+                }
+                
+                updateDisplayValue('restDuration', 'restDurationValue');
+                updateSliderFill(this, 5, 120);
+            });
+            
+            // Düğme kontrolleri
+            minus.addEventListener('click', function() {
+                if (restDuration > 5) {
+                    restDuration = Math.max(5, restDuration - 5);
+                    slider.value = restDuration;
+                    updateDisplayValue('restDuration', 'restDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('restPresets', restDuration);
+                }
+            });
+            
+            plus.addEventListener('click', function() {
+                if (restDuration < 120) {
+                    restDuration = Math.min(120, restDuration + 5);
+                    slider.value = restDuration;
+                    updateDisplayValue('restDuration', 'restDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('restPresets', restDuration);
+                }
+            });
+        }
+
+        // Prep Duration slider'ını ayarla
+        function setupPrepDurationSlider(snapValues, snapThreshold) {
+            const slider = document.getElementById('prepDuration');
+            const minus = document.getElementById('prepMinus');
+            const plus = document.getElementById('prepPlus');
+            
+            // Slider dolum rengini ayarla
+            updateSliderFill(slider, 3, 30);
+            
+            // Değer değiştiğinde 
+            slider.addEventListener('input', function() {
+                prepDuration = parseInt(this.value);
+                updateDisplayValue('prepDuration', 'prepDurationValue');
+                updateSliderFill(this, 3, 30);
+                
+                // Preset butonlarını güncelle
+                updateActivePreset('prepPresets', prepDuration);
+            });
+            
+            // Değer bırakıldığında snap işlemi yap
+            slider.addEventListener('change', function() {
+                const value = parseInt(this.value);
+                
+                // En yakın snap değerini bul
+                let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
+                
+                if (closestSnap !== null) {
+                    prepDuration = closestSnap;
+                    this.value = closestSnap;
+                } else {
+                    prepDuration = value;
+                }
+                
+                updateDisplayValue('prepDuration', 'prepDurationValue');
+                updateSliderFill(this, 3, 30);
+            });
+            
+            // Düğme kontrolleri
+            minus.addEventListener('click', function() {
+                if (prepDuration > 3) {
+                    prepDuration = Math.max(3, prepDuration - 1);
+                    slider.value = prepDuration;
+                    updateDisplayValue('prepDuration', 'prepDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('prepPresets', prepDuration);
+                }
+            });
+            
+            plus.addEventListener('click', function() {
+                if (prepDuration < 30) {
+                    prepDuration = Math.min(30, prepDuration + 1);
+                    slider.value = prepDuration;
+                    updateDisplayValue('prepDuration', 'prepDurationValue');
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('prepPresets', prepDuration);
+                }
+            });
+        }
+
+        // Total Rounds slider'ını ayarla - adım değerini 1 olarak güncelle
+        function setupTotalRoundsSlider(snapValues, snapThreshold) {
+            const slider = document.getElementById('totalRounds');
+            const minus = document.getElementById('roundsMinus');
+            const plus = document.getElementById('roundsPlus');
+            
+            // Slider dolum rengini ayarla
+            updateSliderFill(slider, 1, 15);
+            
+            // Değer değiştiğinde 
+            slider.addEventListener('input', function() {
+                totalRounds = parseInt(this.value);
+                updateDisplayValue('totalRounds', 'totalRoundsValue');
+                updateSliderFill(this, 1, 15);
+                
+                // Preset butonlarını güncelle
+                updateActivePreset('roundsPresets', totalRounds);
+            });
+            
+            // Değer bırakıldığında snap işlemi yap
+            slider.addEventListener('change', function() {
+                const value = parseInt(this.value);
+                
+                // En yakın snap değerini bul
+                let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
+                
+                if (closestSnap !== null) {
+                    totalRounds = closestSnap;
+                    this.value = closestSnap;
+                } else {
+                    totalRounds = value;
+                }
+                
+                updateDisplayValue('totalRounds', 'totalRoundsValue');
+                updateSliderFill(this, 1, 15);
+            });
+            
+            // Düğme kontrolleri - 1'er 1'er artıp azalacak şekilde
+            minus.addEventListener('click', function() {
+                if (totalRounds > 1) {
+                    totalRounds = Math.max(1, totalRounds - 1);
+                    slider.value = totalRounds;
+                    updateDisplayValue('totalRounds', 'totalRoundsValue');
+                    updateSliderFill(slider, 1, 15);
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundsPresets', totalRounds);
+                }
+            });
+            
+            plus.addEventListener('click', function() {
+                if (totalRounds < 15) {
+                    totalRounds = Math.min(15, totalRounds + 1);
+                    slider.value = totalRounds;
+                    updateDisplayValue('totalRounds', 'totalRoundsValue');
+                    updateSliderFill(slider, 1, 15);
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundsPresets', totalRounds);
+                }
+            });
+        }
+
+        // Slider dolum rengini güncelle
+        function updateSliderFill(slider, min, max) {
+            const value = parseInt(slider.value);
+            const percent = ((value - min) / (max - min)) * 100;
+            slider.style.setProperty('--slider-value', `${percent}%`);
+        }
+
+        // Tick işaretlerini oluştur
+        function createTicks(containerId, min, max, snapValues) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            // Snap değerlerine göre tick işaretleri ekle
+            for (let value of snapValues) {
+                if (value >= min && value <= max) {
+                    const percent = ((value - min) / (max - min)) * 100;
+                    const tick = document.createElement('div');
+                    tick.className = 'slider-tick';
+                    if ([15, 60, 120, 180, 240, 300, 360].includes(value)) {
+                        tick.className += ' major';
+                    }
+                    tick.style.left = `${percent}%`;
+                    container.appendChild(tick);
+                }
+            }
+        }
+
+        // Belirli bir değere yakın olup olmadığını kontrol eden yardımcı fonksiyon
+        function findClosestSnap(value, snapValues, threshold) {
+            for (let snapValue of snapValues) {
+                if (Math.abs(value - snapValue) <= threshold) {
+                    return snapValue;
+                }
+            }
+            return null; // Belirli bir eşik içinde değilse null döndür
+        }
+
+        // En yakın snap değeri indeksini bulan fonksiyon
+        function findClosestSnapIndex(value, snapValues) {
+            let closestIndex = 0;
+            let minDistance = Math.abs(value - snapValues[0]);
+            
+            for (let i = 1; i < snapValues.length; i++) {
+                const distance = Math.abs(value - snapValues[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = i;
+                }
+            }
+            
+            return closestIndex;
+        }
+
+        // Zaman formatını düzenle
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // En yakın snap etiketini vurgula
+        function highlightClosestSnapLabel(containerId, value, snapValues, threshold) {
+            const container = document.getElementById(containerId);
+            if (!container) return; // Container yoksa işlemi atla
+            
+            const labels = container.querySelectorAll('.snap-point-label');
+            
+            // Önce tüm etiketlerin vurgusunu kaldır
+            labels.forEach(label => {
+                label.style.color = '#666';
+                label.style.backgroundColor = 'transparent';
+                label.classList.remove('active');
+            });
+            
+            // Tam eşleşen değeri bul
+            let exactMatchFound = false;
+            
+            for (let i = 0; i < labels.length; i++) {
+                const labelValue = parseInt(labels[i].dataset.value);
+                if (labelValue === value) {
+                    // Tam eşleşmeyi vurgula
+                    labels[i].style.color = '#ff4444';
+                    labels[i].style.backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                    labels[i].classList.add('active');
+                    exactMatchFound = true;
+                    break;
+                }
+            }
+            
+            // Tam eşleşme yoksa, en yakın değeri vurgula
+            if (!exactMatchFound) {
+                let closestIndex = 0;
+                let minDistance = Infinity;
+                
+                for (let i = 0; i < labels.length; i++) {
+                    const labelValue = parseInt(labels[i].dataset.value);
+                    const distance = Math.abs(value - labelValue);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestIndex = i;
+                    }
+                }
+                
+                // Eşik içindeyse vurgula
+                if (minDistance <= threshold) {
+                    labels[closestIndex].style.color = '#ff4444';
+                    labels[closestIndex].style.backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                    labels[closestIndex].classList.add('active');
+                }
+            }
+        }
+
+        // Yeni eklenen butonlar için olay dinleyicileri
+        function setupExtraButtons() {
+            document.getElementById('prepMinus').addEventListener('click', function() {
+                const slider = document.getElementById('prepDuration');
+                if (parseInt(slider.value) > parseInt(slider.min)) {
+                    slider.value = parseInt(slider.value) - 1;
+                    prepDuration = parseInt(slider.value);
+                    updateDisplayValue('prepDuration', 'prepDurationValue');
+                    const event = new Event('input', { bubbles: true });
+                    slider.dispatchEvent(event);
+                }
+            });
+            
+            document.getElementById('prepPlus').addEventListener('click', function() {
+                const slider = document.getElementById('prepDuration');
+                if (parseInt(slider.value) < parseInt(slider.max)) {
+                    slider.value = parseInt(slider.value) + 1;
+                    prepDuration = parseInt(slider.value);
+                    updateDisplayValue('prepDuration', 'prepDurationValue');
+                    const event = new Event('input', { bubbles: true });
+                    slider.dispatchEvent(event);
+                }
+            });
+            
+            document.getElementById('roundsMinus').addEventListener('click', function() {
+                const slider = document.getElementById('totalRounds');
+                if (parseInt(slider.value) > parseInt(slider.min)) {
+                    slider.value = parseInt(slider.value) - 1; // 1'er 1'er azalt
+                    totalRounds = parseInt(slider.value);
+                    updateDisplayValue('totalRounds', 'totalRoundsValue');
+                    updateSliderFill(slider, 1, 15);
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundsPresets', totalRounds);
+                }
+            });
+            
+            document.getElementById('roundsPlus').addEventListener('click', function() {
+                const slider = document.getElementById('totalRounds');
+                if (parseInt(slider.value) < parseInt(slider.max)) {
+                    slider.value = parseInt(slider.value) + 1; // 1'er 1'er artır
+                    totalRounds = parseInt(slider.value);
+                    updateDisplayValue('totalRounds', 'totalRoundsValue');
+                    updateSliderFill(slider, 1, 15);
+                    
+                    // Preset butonlarını güncelle
+                    updateActivePreset('roundsPresets', totalRounds);
+                }
+            });
+        }
+
+        // Preset butonlarını oluşturma fonksiyonu
+        function createPresets(containerId, presetValues, currentValue, sliderId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            presetValues.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-btn';
+                
+                if (value === currentValue) {
+                    btn.classList.add('active');
+                }
+                
+                // Buton içeriğini ayarla
+                let btnText = '';
+                
+                if (containerId === 'prepPresets') {
+                    btnText = `${value}s`;
+                } else if (containerId === 'roundsPresets') {
+                    btnText = `${value}`;
+                } else if (containerId === 'restPresets') {
+                    // Rest Duration için hepsi saniye formatında
+                    btnText = `${value}s`;
+                } else {
+                    // Round Duration için format
+                    if (value < 60) {
+                        btnText = `${value}s`;
+                    } else {
+                        const minutes = Math.floor(value / 60);
+                        btnText = `${minutes}m`;
+                    }
+                }
+                
+                btn.textContent = btnText;
+                
+                btn.addEventListener('click', function() {
+                    // Slider değerini ayarla
+                    const slider = document.getElementById(sliderId);
+                    slider.value = value;
+                    
+                    // Aktif sınıfını sadece tıklanan butona ver
+                    container.querySelectorAll('.preset-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // İlgili değişkeni güncelle
+                    if (sliderId === 'roundDuration') {
+                        roundDuration = value;
+                        updateSliderFill(slider, 5, 360);
+                    } else if (sliderId === 'restDuration') {
+                        restDuration = value;
+                        updateSliderFill(slider, 5, 120);
+                    } else if (sliderId === 'prepDuration') {
+                        prepDuration = value;
+                        updateSliderFill(slider, 3, 30);
+                    } else if (sliderId === 'totalRounds') {
+                        totalRounds = value;
+                        updateSliderFill(slider, 1, 15);
+                    }
+                    
+                    // Input olayını tetikle
+                    const event = new Event('input', { bubbles: true });
+                    slider.dispatchEvent(event);
+                    
+                    // Görüntülenen değeri güncelle
+                    updateDisplayValue(slider.id, slider.id + 'Value');
+                });
+                
+                container.appendChild(btn);
+            });
+        }
+        
+        // Slider değeri değiştiğinde ayrıca preset butonlarını da güncelle
+        function updateActivePreset(containerId, value) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const buttons = container.querySelectorAll('.preset-btn');
+            let exactMatch = false;
+            
+            buttons.forEach(btn => {
+                const btnValue = parseBtnValue(btn.textContent);
+                
+                if (btnValue === value) {
+                    btn.classList.add('active');
+                    exactMatch = true;
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            return exactMatch;
+        }
+        
+        // Buton metninden değeri çıkarma
+        function parseBtnValue(text) {
+            if (text.endsWith('s')) {
+                return parseInt(text.replace('s', ''));
+            } else if (text.endsWith('m')) {
+                return parseInt(text.replace('m', '')) * 60;
+            } else {
+                return parseInt(text);
+            }
+        }
+    </script>
+</body>
+</html> 
