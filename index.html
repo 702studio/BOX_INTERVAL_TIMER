@@ -253,7 +253,7 @@
         .slider {
             -webkit-appearance: none;
             width: 100%;
-            height: 6px;
+            height: 4px;
             background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%));
             outline: none;
             border-radius: 3px;
@@ -264,8 +264,8 @@
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #f0f0f0;
             border-radius: 50%;
             cursor: pointer;
@@ -282,8 +282,8 @@
         }
 
         .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #f0f0f0;
             border-radius: 50%;
             cursor: pointer;
@@ -376,15 +376,15 @@
 
         @media (max-width: 768px) {
             .slider::-webkit-slider-thumb {
-                width: 28px;
-                height: 28px;
+                width: 22px;
+                height: 22px;
             }
             .slider::-moz-range-thumb {
-                width: 28px;
-                height: 28px;
+                width: 22px;
+                height: 22px;
             }
             .slider {
-                height: 8px;
+                height: 6px;
             }
         }
 
@@ -499,16 +499,23 @@
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto">
-        <div class="p-0 sm:p-4 flex items-center justify-center min-h-screen">
+        <div class="p-0 sm:p-4 flex items-start sm:items-center justify-center min-h-screen">
             <div class="bg-custom w-full h-full flex flex-col p-4 sm:p-6 sm:h-auto sm:max-w-sm sm:rounded-xl sm:border sm:border-gray-700">
                 <div class="flex justify-between items-center mb-4 sm:mb-6">
                     <h2 class="text-xl font-bold uppercase text-center sm:text-left">SETTINGS</h2>
-                    <label for="muteToggle" class="relative inline-flex items-center cursor-pointer">
+                    <label for="muteToggle" class="relative inline-flex items-center cursor-pointer gap-2">
                         <input type="checkbox" id="muteToggle" class="sr-only peer">
+                        <svg id="volume-on-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-300">
+                          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/>
+                          <path d="M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/>
+                        </svg>
+                        <svg id="volume-off-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-300 hidden">
+                          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z"/>
+                        </svg>
                         <div class="w-11 h-6 bg-gray-500 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[#1A1A1A] peer-focus:ring-red-500 peer-checked:bg-red-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
                 </div>
-                <div class="space-y-6 flex-grow overflow-y-auto">
+                <div class="space-y-6 flex-grow overflow-y-auto pb-6">
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <label class="text-sm font-medium uppercase">ROUND DURATION</label>
@@ -661,6 +668,8 @@
         const notificationVolumePlusBtn = document.getElementById('notificationVolumePlus');
 
         const muteToggle = document.getElementById('muteToggle'); // Changed from muteButton
+        const volumeOnIcon = document.getElementById('volume-on-icon');
+        const volumeOffIcon = document.getElementById('volume-off-icon');
         
         // SVG Progress Circle
         const circle = document.getElementById('progress-ring-circle');
@@ -1542,7 +1551,15 @@
             if (!muteToggle) return;
             const effectivelyMuted = isMuted || masterVolume === 0;
             muteToggle.checked = effectivelyMuted;
-            // No longer needs to manage text or 'active-button' class for the button.
+            if (volumeOnIcon && volumeOffIcon) {
+                if (effectivelyMuted) {
+                    volumeOffIcon.classList.remove('hidden');
+                    volumeOnIcon.classList.add('hidden');
+                } else {
+                    volumeOnIcon.classList.remove('hidden');
+                    volumeOffIcon.classList.add('hidden');
+                }
+            }
         }
 
         function playNotificationSound() {
