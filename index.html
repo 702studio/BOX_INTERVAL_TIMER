@@ -430,7 +430,7 @@
 </head>
 <body class="font-jetbrains bg-custom">
     <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
-        <div class="bg-custom p-0 w-full flex flex-col min-h-screen">
+        <div class="bg-custom p-0 w-full flex flex-col min-h-screen pb-24">
             <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
             
             <div class="flex items-center justify-center flex-grow">
@@ -473,8 +473,12 @@
                 </div>
             </div>
             </div>
+        </div>
+    </div>
 
-            <div class="flex flex-col w-full mt-auto"> {/* Changed to flex-col, removed gap and padding if any */}
+    <div class="fixed bottom-0 left-0 right-0 z-10 bg-custom"> <!-- Outer fixed bar -->
+        <div class="max-w-xl mx-auto"> <!-- Inner centering container -->
+            <div class="flex flex-col w-full"> <!-- Original button_rows_container, mt-auto removed -->
                 <!-- First Row -->
                 <div class="flex flex-row w-full">
                     <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
@@ -557,10 +561,13 @@
                     </div>
 
                     <!-- Sound Controls -->
-                    <div class="space-y-3 pt-4 border-t border-gray-600 mt-6">
-                        <h3 class="text-md font-medium uppercase text-gray-400">Sound Settings</h3>
-                        <div class="flex justify-between items-center">
-                            <label class="text-sm font-medium uppercase">Master Volume</label>
+                    <details class="pt-4 border-t border-gray-600 mt-6">
+                        <summary class="text-md font-medium uppercase text-gray-300 cursor-pointer hover:text-white mb-3 focus:outline-none">
+                            SOUND SETTINGS
+                        </summary>
+                        <div class="space-y-3"> {/* pt-4 border-t border-gray-600 mt-6 removed from here */}
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-medium uppercase">Master Volume</label>
                             <span id="masterVolumeValue" class="text-right ml-2">100%</span>
                         </div>
                         <div class="slider-container">
@@ -584,14 +591,16 @@
                         </div>
 
                         <div class="flex items-center justify-between mt-4">
-                            <label for="muteButton" class="text-sm font-medium uppercase">Mute All Sounds</label>
-                            <button id="muteButton" class="px-4 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase text-xs">
-                                MUTE
-                            </button>
+                            <span class="text-sm font-medium uppercase text-gray-300">Mute All Sounds</span>
+                            <label for="muteToggle" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="muteToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-500 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[#1A1A1A] peer-focus:ring-red-500 peer-checked:bg-red-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            </label>
                         </div>
                     </div>
+                    </details>
                 </div>
-                <div class="flex flex-row w-full mt-auto gap-0 pt-4"> {/* Added pt-4 for spacing above buttons, gap-0 already there */}
+                <div class="flex flex-row w-full mt-auto gap-0 pt-4">
                     <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
                         CANCEL
                     </button>
@@ -651,7 +660,7 @@
         const notificationVolumeMinusBtn = document.getElementById('notificationVolumeMinus');
         const notificationVolumePlusBtn = document.getElementById('notificationVolumePlus');
 
-        const muteButton = document.getElementById('muteButton');
+        const muteToggle = document.getElementById('muteToggle'); // Changed from muteButton
         
         // SVG Progress Circle
         const circle = document.getElementById('progress-ring-circle');
@@ -1448,7 +1457,7 @@
                 masterVolume = parseInt(this.value) / 100;
                 updateVolumeDisplay(masterVolumeValueDisplay, this.value);
                 applyMasterVolume();
-                updateMuteButtonState();
+                updateMuteToggleState();
                 updateSliderFill(this, parseInt(this.min), parseInt(this.max));
             });
             masterVolumeMinusBtn.addEventListener('click', function() {
@@ -1458,7 +1467,7 @@
                 masterVolume = newValue / 100;
                 updateVolumeDisplay(masterVolumeValueDisplay, newValue);
                 applyMasterVolume();
-                updateMuteButtonState();
+                updateMuteToggleState();
                 updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
             });
             masterVolumePlusBtn.addEventListener('click', function() {
@@ -1468,7 +1477,7 @@
                 masterVolume = newValue / 100;
                 updateVolumeDisplay(masterVolumeValueDisplay, newValue);
                 applyMasterVolume();
-                updateMuteButtonState();
+                updateMuteToggleState();
                 updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
             });
 
@@ -1498,18 +1507,18 @@
                 updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
             });
 
-            // Mute Button
-            muteButton.addEventListener('click', function() {
-                isMuted = !isMuted;
+            // Mute Button (now Toggle)
+            muteToggle.addEventListener('change', function() {
+                isMuted = this.checked;
                 applyMasterVolume();
-                updateMuteButtonState();
+                updateMuteToggleState(); // Ensure toggle state is synced if masterVol is 0 (will rename this function next)
             });
 
             // Initial UI Update
             updateVolumeDisplay(masterVolumeValueDisplay, masterVolumeSlider.value);
             updateVolumeDisplay(notificationVolumeValueDisplay, notificationVolumeSlider.value);
             applyMasterVolume();
-            updateMuteButtonState();
+            updateMuteToggleState();
             // Set initial fill for sound sliders
             if (masterVolumeSlider) updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
             if (notificationVolumeSlider) updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
@@ -1529,15 +1538,11 @@
             if(element) element.textContent = `${value}%`;
         }
 
-        function updateMuteButtonState() {
-            if (!muteButton) return;
-            if (isMuted || masterVolume === 0) {
-                muteButton.textContent = 'UNMUTE';
-                muteButton.classList.add('active-button');
-            } else {
-                muteButton.textContent = 'MUTE';
-                muteButton.classList.remove('active-button');
-            }
+        function updateMuteToggleState() { // Renamed from updateMuteButtonState
+            if (!muteToggle) return;
+            const effectivelyMuted = isMuted || masterVolume === 0;
+            muteToggle.checked = effectivelyMuted;
+            // No longer needs to manage text or 'active-button' class for the button.
         }
 
         function playNotificationSound() {
