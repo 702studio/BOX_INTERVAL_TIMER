@@ -44,18 +44,18 @@
 
         /* SVG Filtreler */
         svg {
-            --progress-color: #ff4444;
+            /* --progress-color: #ff4444; */ /* Removed as JS will handle color directly */
         }
 
         /* Progress çizgisi */
         .progress-ring__circle {
             fill: transparent;
-            stroke: var(--progress-color);
+            /* stroke: var(--progress-color); */ /* Removed as JS will handle color directly */
             stroke-width: 3;
             stroke-linecap: round;
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
-            transition: none;
+            transition: stroke 0.5s ease-in-out; /* Added for smooth color change */
         }
 
         /* İç ışıma dairesi (daha büyük fill değeri) */
@@ -429,14 +429,15 @@
     </style>
 </head>
 <body class="font-jetbrains bg-custom">
-    <div class="container mx-auto px-4 py-4 md:py-8 max-w-xl flex justify-center">
-        <div class="bg-custom rounded-2xl shadow-lg p-4 md:p-6 lg:p-8 border border-gray-700 w-full">
-            <h1 class="text-3xl md:text-4xl font-normal text-white mb-6 md:mb-8 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+    <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
+        <div class="bg-custom p-0 w-full flex flex-col min-h-screen pb-24">
+            <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
 
-            <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto mb-6 md:mb-8 aspect-square">
-                <!-- SVG Progress Circle -->
-                <div class="timer-circle-container">
-                    <div id="timer-circle-bg" class="timer-circle-bg"></div>
+            <div class="flex items-center justify-center flex-grow">
+                <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
+                    <!-- SVG Progress Circle -->
+                    <div class="timer-circle-container">
+                        <div id="timer-circle-bg" class="timer-circle-bg"></div>
                     <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 384 384" style="overflow: visible;">
                         <!-- SVG Filtreler -->
                         <defs>
@@ -450,7 +451,7 @@
                         <circle
                             class="progress-ring__circle"
                             id="progress-ring-circle"
-                            stroke="#ff4444"
+                            /* stroke="#ff4444" */ /* Removed as JS will handle color directly */
                             stroke-width="3"
                             fill="transparent"
                             r="190"
@@ -471,17 +472,24 @@
                     </div>
                 </div>
             </div>
-
-            <div class="flex flex-row gap-0">
-                <button id="start" class="flex-1 px-4 py-2 bg-[#404040] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
-                    START
-                </button>
-                <button id="reset" class="flex-1 px-4 py-2 bg-[#333333] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
-                    RESET
-                </button>
             </div>
-            <div class="text-center">
-                <button id="settingsBtn" class="w-full px-4 py-2 bg-[#262626] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 z-10 bg-custom"> <!-- Outer fixed bar -->
+        <div class="max-w-xl mx-auto"> <!-- Inner centering container -->
+            <div class="flex flex-col w-full"> <!-- Original button_rows_container, mt-auto removed -->
+                <!-- First Row -->
+                <div class="flex flex-row w-full">
+                    <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
+                        START
+                    </button>
+                    <button id="reset" class="flex-1 px-3 py-2 bg-[#333333] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
+                        RESET
+                    </button>
+                </div>
+                <!-- Second Row -->
+                <button id="settingsBtn" class="w-full px-3 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
                     SETTINGS
                 </button>
             </div>
@@ -491,10 +499,16 @@
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-custom p-6 rounded-xl w-full max-w-sm border border-gray-700">
-                <h2 class="text-xl font-bold mb-6 uppercase">SETTINGS</h2>
-                <div class="space-y-6">
+        <div class="p-0 sm:p-4 flex items-center justify-center min-h-screen">
+            <div class="bg-custom w-full h-full flex flex-col p-4 sm:p-6 sm:h-auto sm:max-w-sm sm:rounded-xl sm:border sm:border-gray-700">
+                <div class="flex justify-between items-center mb-4 sm:mb-6"> {/* New wrapper for title and toggle */}
+                    <h2 class="text-xl font-bold uppercase text-center sm:text-left">SETTINGS</h2>
+                    <label for="muteToggle" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="muteToggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-500 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[#1A1A1A] peer-focus:ring-red-500 peer-checked:bg-red-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    </label>
+                </div>
+                <div class="space-y-6 flex-grow overflow-y-auto">
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <label class="text-sm font-medium uppercase">ROUND DURATION</label>
@@ -551,8 +565,42 @@
                             <div class="presets-container" id="roundsPresets"></div>
                         </div>
                     </div>
+
+                    <!-- Sound Controls -->
+                    <details class="pt-4 border-t border-gray-600 mt-6">
+                        <summary class="text-md font-medium uppercase text-gray-300 cursor-pointer hover:text-white mb-3 focus:outline-none">
+                            SOUND SETTINGS
+                        </summary>
+                        <div class="space-y-3"> {/* pt-4 border-t border-gray-600 mt-6 removed from here */}
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-medium uppercase">Master Volume</label>
+                            <span id="masterVolumeValue" class="text-right ml-2">100%</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="masterVolumeMinus">-</button>
+                                <input type="range" id="masterVolume" class="slider" min="0" max="100" step="1" value="100">
+                                <button class="slider-btn plus" id="masterVolumePlus">+</button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-3">
+                            <label class="text-sm font-medium uppercase">Notification Sound</label>
+                            <span id="notificationVolumeValue" class="text-right ml-2">100%</span>
+                        </div>
+                        <div class="slider-container">
+                             <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="notificationVolumeMinus">-</button>
+                                <input type="range" id="notificationVolume" class="slider" min="0" max="100" step="1" value="100">
+                                <button class="slider-btn plus" id="notificationVolumePlus">+</button>
+                            </div>
+                        </div>
+
+                        </div>
+                    </div>
+                    </details>
                 </div>
-                <div class="mt-6 flex justify-between gap-0">
+                <div class="flex flex-row w-full mt-auto gap-0 pt-4">
                     <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
                         CANCEL
                     </button>
@@ -577,6 +625,16 @@
         let prepDuration = 5; // GET READY süresi için yeni değişken
         let totalRounds = 3;
 
+        // Sound control variables
+        let masterVolume = 1; // 0 to 1 (0% to 100%)
+        let notificationVolume = 1; // 0 to 1 (0% to 100%)
+        let isMuted = false;
+
+        // Progress Ring Colors
+        const PROGRESS_COLOR_WORK = '#ff4444'; // Red
+        const PROGRESS_COLOR_REST = '#4466ff'; // Blue
+        const PROGRESS_COLOR_PREP = '#ffffff'; // White
+
         // Zamanlama için milisaniye cinsinden değerler
         let totalDurationMs = 0;
         let timeLeftMs = 0;
@@ -588,6 +646,22 @@
         const statusElement = document.getElementById('timer-status');
         const roundElement = document.getElementById('round-info');
 
+        // Audio elements
+        const notificationSoundElement = document.getElementById('notificationSound');
+
+        // Sound control UI elements
+        const masterVolumeSlider = document.getElementById('masterVolume');
+        const masterVolumeValueDisplay = document.getElementById('masterVolumeValue');
+        const masterVolumeMinusBtn = document.getElementById('masterVolumeMinus');
+        const masterVolumePlusBtn = document.getElementById('masterVolumePlus');
+
+        const notificationVolumeSlider = document.getElementById('notificationVolume');
+        const notificationVolumeValueDisplay = document.getElementById('notificationVolumeValue');
+        const notificationVolumeMinusBtn = document.getElementById('notificationVolumeMinus');
+        const notificationVolumePlusBtn = document.getElementById('notificationVolumePlus');
+
+        const muteToggle = document.getElementById('muteToggle'); // Changed from muteButton
+
         // SVG Progress Circle
         const circle = document.getElementById('progress-ring-circle');
         const radius = 190;
@@ -598,12 +672,42 @@
         circle.style.strokeDashoffset = 0;
 
         // Ekran güncelleme fonksiyonu - sayacın değerini ve ilerleme çubuğunu günceller
-        function updateDisplay() {
+        function updateDisplay(instant = false) { // Added instant parameter
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
             roundElement.textContent = ` ${currentRound.toString().padStart(2, '0')} / ${totalRounds.toString().padStart(2, '0')}`;
+            updateRingColorAndEffects(instant); // Pass instant flag
+        }
+
+        function updateRingColorAndEffects(instant = false) { // Added instant parameter
+            if (!circle) return;
+
+            const originalTransition = circle.style.transition;
+            if (instant) {
+                circle.style.transition = 'none';
+            } else {
+                // Ensure the normal transition is set if it wasn't already,
+                // or rely on the CSS class to provide it.
+                circle.style.transition = 'stroke 0.5s ease-in-out';
+            }
+
+            if (isPreparation) {
+                circle.style.stroke = PROGRESS_COLOR_PREP;
+            } else if (isWork) {
+                circle.style.stroke = PROGRESS_COLOR_WORK;
+            } else { // Implicitly REST
+                circle.style.stroke = PROGRESS_COLOR_REST;
+            }
+
+            if (instant) {
+                // Force reflow/repaint might be needed for some browsers for the transition 'none' to apply immediately
+                // before restoring it. Using requestAnimationFrame defers re-enabling transition slightly.
+                requestAnimationFrame(() => {
+                    circle.style.transition = originalTransition || 'stroke 0.5s ease-in-out';
+                });
+            }
         }
 
         // İlerleme çemberini gerçek-zamanlı animasyon ile hareket ettir
@@ -653,11 +757,34 @@
                 const offset = circumference * (1 - percent / 100);
                 circle.style.strokeDashoffset = offset;
 
-                // Son 30 saniye kaldıysa yanıp sönme efektini artır
-                if (!isPreparation && timeLeftMs <= 30000) {
-                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '6');
-                } else {
-                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '4');
+                // Glow oscillation effect
+                let baseGlow = 4; // Default glow for non-WORK or WORK > 30s
+                let glowAmplitude = 0; // No oscillation by default
+                let oscillationSpeed = 0.005; // Default speed for normal heartbeat glow
+
+                if (isWork && !isPreparation) {
+                    if (timeLeftMs <= 15000) { // Last 15 seconds (Peak WORK)
+                        baseGlow = 10;        // Higher base glow for peak
+                        glowAmplitude = 5;    // Larger amplitude for peak glow oscillation
+                        oscillationSpeed = 0.008; // Faster oscillation for peak
+                    } else if (timeLeftMs <= 30000) { // Last 30 seconds (Normal WORK)
+                        baseGlow = 6;         // Normal base glow for heartbeat effect
+                        glowAmplitude = 3;    // Normal amplitude for glow oscillation
+                        // oscillationSpeed remains default 0.005
+                    }
+                    // Else, for work > 30s, baseGlow is 4 (set initially), amplitude is 0 (no oscillation)
+                }
+                // For non-WORK states (prep, rest, finished), baseGlow is 4, amplitude is 0.
+
+                let currentGlowValue = baseGlow;
+                if (glowAmplitude > 0) {
+                    // Sine wave oscillates between -1 and 1. (+1)/2 makes it 0 to 1.
+                    // So, currentGlowValue = baseGlow + (0 to 1) * glowAmplitude
+                    currentGlowValue = baseGlow + ((Math.sin(timestamp * oscillationSpeed) + 1) / 2) * glowAmplitude;
+                }
+
+                if (glowFilter) {
+                    glowFilter.setAttribute('stdDeviation', currentGlowValue.toFixed(1));
                 }
 
                 // Yeni frame için kendini tekrar çağır
@@ -722,8 +849,8 @@
             // Hazırlık aşamasındaysak
             if (isPreparation) {
                 timeLeft = prepDuration; // Kullanıcının ayarladığı hazırlık süresi
-                updateDisplay();
             }
+            updateDisplay(); // This will also call updateRingColorAndEffects
 
             // Pürüzsüz animasyonu başlat
             startProgressAnimation();
@@ -745,28 +872,29 @@
                     isWork = true;
                     timeLeft = roundDuration;
                     statusElement.textContent = "WORK";
-                    updateDisplay();
-                    startTimer();
+                    updateDisplay(true); // <<< INSTANT transition for REST to WORK
+                    startTimer(); // startTimer calls updateDisplay() without instant=true
                 } else if (isWork) {
-                    document.getElementById('notificationSound').play();
+                    playNotificationSound();
 
                     if (currentRound < totalRounds) {
                         currentRound++;
                         isWork = false;
                         timeLeft = restDuration;
                         statusElement.textContent = "REST";
-                        updateDisplay();
+                        updateDisplay(); // Normal transition
                         startTimer();
                     } else {
                         statusElement.textContent = "FINISHED";
                         resetProgress();
-                        document.getElementById('notificationSound').play();
+                        playNotificationSound();
+                        // updateDisplay(); // Color should already be set by resetProgress/stopTimer via updateDisplay
                     }
-                } else {
+                } else { // Was REST, now transitioning to WORK (e.g. after rest, next round starts)
                     isWork = true;
                     timeLeft = roundDuration;
                     statusElement.textContent = "WORK";
-                    updateDisplay();
+                    updateDisplay(true); // <<< INSTANT transition for REST to WORK
                     startTimer();
                 }
             }
@@ -779,10 +907,16 @@
             document.getElementById('start').classList.remove('active-button');
             clearInterval(timer);
             stopProgressAnimation();
+            // Clean up effects when timer is stopped
+            // Heartbeat classes are already removed by the animate function's logic when not in specific states.
+            // Explicitly reset glow to a non-oscillating default.
+            if (glowFilter) {
+                glowFilter.setAttribute('stdDeviation', '4');
+            }
         }
 
         function resetTimer() {
-            stopTimer();
+            stopTimer(); // This will also clear effects like resetting glow
             isRunning = false;
             currentRound = 1;
             isWork = false;
@@ -801,6 +935,7 @@
 
             // Slider'ları ayarla
             setupSliders();
+            setupSoundControls(); // Initialize sound controls
 
             // Yeni butonları da ayarla
             setupExtraButtons();
@@ -1126,7 +1261,7 @@
                     totalRounds = Math.max(1, totalRounds - 1);
                     slider.value = totalRounds;
                     updateDisplayValue('totalRounds', 'totalRoundsValue');
-                    updateSliderFill(slider, 1, 15);
+                    updateSliderFill(slider, parseInt(slider.min), parseInt(slider.max));
 
                     // Preset butonlarını güncelle
                     updateActivePreset('roundsPresets', totalRounds);
@@ -1310,6 +1445,115 @@
             });
         }
 
+        // --- Sound Control Functions ---
+        function setupSoundControls() {
+            if (!masterVolumeSlider) { // Check if elements are loaded
+                console.warn("Sound control elements (masterVolumeSlider) not found. Skipping setupSoundControls.");
+                return;
+            }
+
+            // Master Volume Slider
+            masterVolumeSlider.addEventListener('input', function() {
+                masterVolume = parseInt(this.value) / 100;
+                updateVolumeDisplay(masterVolumeValueDisplay, this.value);
+                applyMasterVolume();
+                updateMuteToggleState();
+                updateSliderFill(this, parseInt(this.min), parseInt(this.max));
+            });
+            masterVolumeMinusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(masterVolumeSlider.value);
+                let newValue = Math.max(0, currentValue - 5);
+                masterVolumeSlider.value = newValue;
+                masterVolume = newValue / 100;
+                updateVolumeDisplay(masterVolumeValueDisplay, newValue);
+                applyMasterVolume();
+                updateMuteToggleState();
+                updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
+            });
+            masterVolumePlusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(masterVolumeSlider.value);
+                let newValue = Math.min(100, currentValue + 5);
+                masterVolumeSlider.value = newValue;
+                masterVolume = newValue / 100;
+                updateVolumeDisplay(masterVolumeValueDisplay, newValue);
+                applyMasterVolume();
+                updateMuteToggleState();
+                updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
+            });
+
+            // Notification Volume Slider
+            notificationVolumeSlider.addEventListener('input', function() {
+                notificationVolume = parseInt(this.value) / 100;
+                updateVolumeDisplay(notificationVolumeValueDisplay, this.value);
+                applyMasterVolume();
+                updateSliderFill(this, parseInt(this.min), parseInt(this.max));
+            });
+            notificationVolumeMinusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(notificationVolumeSlider.value);
+                let newValue = Math.max(0, currentValue - 5);
+                notificationVolumeSlider.value = newValue;
+                notificationVolume = newValue / 100;
+                updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
+                applyMasterVolume();
+                updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
+            });
+            notificationVolumePlusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(notificationVolumeSlider.value);
+                let newValue = Math.min(100, currentValue + 5);
+                notificationVolumeSlider.value = newValue;
+                notificationVolume = newValue / 100;
+                updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
+                applyMasterVolume();
+                updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
+            });
+
+            // Mute Button (now Toggle)
+            muteToggle.addEventListener('change', function() {
+                isMuted = this.checked;
+                applyMasterVolume();
+                updateMuteToggleState(); // Ensure toggle state is synced if masterVol is 0 (will rename this function next)
+            });
+
+            // Initial UI Update
+            updateVolumeDisplay(masterVolumeValueDisplay, masterVolumeSlider.value);
+            updateVolumeDisplay(notificationVolumeValueDisplay, notificationVolumeSlider.value);
+            applyMasterVolume();
+            updateMuteToggleState();
+            // Set initial fill for sound sliders
+            if (masterVolumeSlider) updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
+            if (notificationVolumeSlider) updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
+        }
+
+        function applyMasterVolume() {
+            if (!notificationSoundElement) return;
+            if (isMuted) {
+                notificationSoundElement.volume = 0;
+            } else {
+                let effectiveVolume = Math.max(0, Math.min(1, masterVolume * notificationVolume));
+                notificationSoundElement.volume = effectiveVolume;
+            }
+        }
+
+        function updateVolumeDisplay(element, value) {
+            if(element) element.textContent = `${value}%`;
+        }
+
+        function updateMuteToggleState() { // Renamed from updateMuteButtonState
+            if (!muteToggle) return;
+            const effectivelyMuted = isMuted || masterVolume === 0;
+            muteToggle.checked = effectivelyMuted;
+            // No longer needs to manage text or 'active-button' class for the button.
+        }
+
+        function playNotificationSound() {
+            if (!notificationSoundElement) return;
+            applyMasterVolume();
+            notificationSoundElement.play().catch(error => {
+                console.error("Error playing notification sound:", error);
+            });
+        }
+        // --- End of Sound Control Functions ---
+
         // Preset butonlarını oluşturma fonksiyonu
         function createPresets(containerId, presetValues, currentValue, sliderId) {
             const container = document.getElementById(containerId);
@@ -1358,20 +1602,20 @@
                     });
                     this.classList.add('active');
 
-                    // İlgili değişkeni güncelle
+                    // İlgili değişkeni güncelle ve slider dolumunu ayarla
+                    const min = parseInt(slider.min);
+                    const max = parseInt(slider.max);
+
                     if (sliderId === 'roundDuration') {
                         roundDuration = value;
-                        updateSliderFill(slider, 5, 360);
                     } else if (sliderId === 'restDuration') {
                         restDuration = value;
-                        updateSliderFill(slider, 5, 120);
                     } else if (sliderId === 'prepDuration') {
                         prepDuration = value;
-                        updateSliderFill(slider, 3, 30);
                     } else if (sliderId === 'totalRounds') {
                         totalRounds = value;
-                        updateSliderFill(slider, 1, 15);
                     }
+                    updateSliderFill(slider, min, max);
 
                     // Input olayını tetikle
                     const event = new Event('input', { bubbles: true });
