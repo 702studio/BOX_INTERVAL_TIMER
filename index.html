@@ -237,26 +237,6 @@
             border: none !important; /* Border'ı kesinlikle kaldır */
         }
 
-        /* Heartbeat Animations for Timer Text */
-        @keyframes heartbeat-normal {
-            0% { transform: scale(1); }
-            10% { transform: scale(1.03); }
-            20% { transform: scale(1); }
-            100% { transform: scale(1); }
-        }
-        @keyframes heartbeat-peak {
-            0% { transform: scale(1); }
-            10% { transform: scale(1.06); }
-            20% { transform: scale(1); }
-            100% { transform: scale(1); }
-        }
-        .heartbeat-effect-normal {
-            animation: heartbeat-normal 1.2s infinite ease-in-out;
-        }
-        .heartbeat-effect-peak {
-            animation: heartbeat-peak 0.8s infinite ease-in-out;
-        }
-
         /* Yeni slider tasarımı */
         .slider-container {
             position: relative;
@@ -449,8 +429,8 @@
     </style>
 </head>
 <body class="font-jetbrains bg-custom">
-    <div class="container mx-auto px-4 py-4 max-w-xl flex justify-center">
-        <div class="bg-custom rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-700 w-full flex flex-col min-h-screen">
+    <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
+        <div class="bg-custom p-0 w-full flex flex-col min-h-screen">
             <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
             
             <div class="flex items-center justify-center flex-grow">
@@ -494,14 +474,14 @@
             </div>
             </div>
 
-            <div class="flex flex-row gap-0 w-full mt-auto p-2">
-                <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase rounded-l-md">
+            <div class="flex flex-row gap-0 w-full mt-auto p-0">
+                <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
                     START
                 </button>
                 <button id="reset" class="flex-1 px-3 py-2 bg-[#333333] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
                     RESET
                 </button>
-                <button id="settingsBtn" class="flex-1 px-3 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase rounded-r-md">
+                <button id="settingsBtn" class="flex-1 px-3 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
                     SETTINGS
                 </button>
             </div>
@@ -511,10 +491,10 @@
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-custom p-6 rounded-xl w-full max-w-sm border border-gray-700">
-                <h2 class="text-xl font-bold mb-6 uppercase">SETTINGS</h2>
-                <div class="space-y-6">
+        <div class="p-0 sm:p-4 flex items-center justify-center min-h-screen">
+            <div class="bg-custom w-full h-full flex flex-col p-4 sm:p-6 sm:h-auto sm:max-w-sm sm:rounded-xl sm:border sm:border-gray-700">
+                <h2 class="text-xl font-bold mb-4 sm:mb-6 uppercase text-center sm:text-left">SETTINGS</h2>
+                <div class="space-y-6 flex-grow overflow-y-auto">
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <label class="text-sm font-medium uppercase">ROUND DURATION</label>
@@ -607,11 +587,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 flex justify-between gap-0">
-                    <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
+                <div class="flex flex-row w-full mt-auto gap-0 pt-4"> {/* Added pt-4 for spacing above buttons, gap-0 already there */}
+                    <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase sm:rounded-bl-xl">
                         CANCEL
                     </button>
-                    <button id="saveSettings" class="flex-1 px-4 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button uppercase">
+                    <button id="saveSettings" class="flex-1 px-4 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button uppercase sm:rounded-br-xl">
                         SAVE
                     </button>
                 </div>
@@ -679,17 +659,26 @@
         circle.style.strokeDashoffset = 0;
         
         // Ekran güncelleme fonksiyonu - sayacın değerini ve ilerleme çubuğunu günceller
-        function updateDisplay() {
+        function updateDisplay(instant = false) { // Added instant parameter
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
             roundElement.textContent = ` ${currentRound.toString().padStart(2, '0')} / ${totalRounds.toString().padStart(2, '0')}`;
-            updateRingColorAndEffects(); // Update ring color based on state
+            updateRingColorAndEffects(instant); // Pass instant flag
         }
 
-        function updateRingColorAndEffects() {
+        function updateRingColorAndEffects(instant = false) { // Added instant parameter
             if (!circle) return;
+
+            const originalTransition = circle.style.transition;
+            if (instant) {
+                circle.style.transition = 'none';
+            } else {
+                // Ensure the normal transition is set if it wasn't already,
+                // or rely on the CSS class to provide it.
+                circle.style.transition = 'stroke 0.5s ease-in-out';
+            }
 
             if (isPreparation) {
                 circle.style.stroke = PROGRESS_COLOR_PREP;
@@ -697,6 +686,14 @@
                 circle.style.stroke = PROGRESS_COLOR_WORK;
             } else { // Implicitly REST
                 circle.style.stroke = PROGRESS_COLOR_REST;
+            }
+
+            if (instant) {
+                // Force reflow/repaint might be needed for some browsers for the transition 'none' to apply immediately
+                // before restoring it. Using requestAnimationFrame defers re-enabling transition slightly.
+                requestAnimationFrame(() => {
+                    circle.style.transition = originalTransition || 'stroke 0.5s ease-in-out';
+                });
             }
         }
         
@@ -747,31 +744,34 @@
                 const offset = circumference * (1 - percent / 100);
                 circle.style.strokeDashoffset = offset;
                 
-                // Glow and Heartbeat effects based on time left in WORK state
+                // Glow oscillation effect
+                let baseGlow = 4; // Default glow for non-WORK or WORK > 30s
+                let glowAmplitude = 0; // No oscillation by default
+                let oscillationSpeed = 0.005; // Default speed for normal heartbeat glow
+
                 if (isWork && !isPreparation) {
-                    if (timeLeftMs <= 15000) { // Last 15 seconds (Peak)
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '12'); // Intense glow
-                        if (timerElement) { // timerElement is already document.getElementById('timer')
-                            timerElement.classList.remove('heartbeat-effect-normal');
-                            timerElement.classList.add('heartbeat-effect-peak');
-                        }
-                    } else if (timeLeftMs <= 30000) { // Last 30 seconds (Normal)
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '8'); // Enhanced glow
-                        if (timerElement) {
-                            timerElement.classList.remove('heartbeat-effect-peak');
-                            timerElement.classList.add('heartbeat-effect-normal');
-                        }
-                    } else { // Work state, but more than 30 seconds left
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '4'); // Default work glow
-                        if (timerElement) {
-                            timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-                        }
+                    if (timeLeftMs <= 15000) { // Last 15 seconds (Peak WORK)
+                        baseGlow = 10;        // Higher base glow for peak
+                        glowAmplitude = 5;    // Larger amplitude for peak glow oscillation
+                        oscillationSpeed = 0.008; // Faster oscillation for peak
+                    } else if (timeLeftMs <= 30000) { // Last 30 seconds (Normal WORK)
+                        baseGlow = 6;         // Normal base glow for heartbeat effect
+                        glowAmplitude = 3;    // Normal amplitude for glow oscillation
+                        // oscillationSpeed remains default 0.005
                     }
-                } else { // Not in active work state (prep, rest, or finished)
-                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '4'); // Default non-work glow
-                    if (timerElement) {
-                        timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-                    }
+                    // Else, for work > 30s, baseGlow is 4 (set initially), amplitude is 0 (no oscillation)
+                }
+                // For non-WORK states (prep, rest, finished), baseGlow is 4, amplitude is 0.
+
+                let currentGlowValue = baseGlow;
+                if (glowAmplitude > 0) {
+                    // Sine wave oscillates between -1 and 1. (+1)/2 makes it 0 to 1.
+                    // So, currentGlowValue = baseGlow + (0 to 1) * glowAmplitude
+                    currentGlowValue = baseGlow + ((Math.sin(timestamp * oscillationSpeed) + 1) / 2) * glowAmplitude;
+                }
+
+                if (glowFilter) {
+                    glowFilter.setAttribute('stdDeviation', currentGlowValue.toFixed(1));
                 }
                 
                 // Yeni frame için kendini tekrar çağır
@@ -859,8 +859,8 @@
                     isWork = true;
                     timeLeft = roundDuration;
                     statusElement.textContent = "WORK";
-                    updateDisplay();
-                    startTimer();
+                    updateDisplay(true); // <<< INSTANT transition for REST to WORK
+                    startTimer(); // startTimer calls updateDisplay() without instant=true
                 } else if (isWork) {
                     playNotificationSound();
                     
@@ -869,18 +869,19 @@
                         isWork = false;
                         timeLeft = restDuration;
                         statusElement.textContent = "REST";
-                        updateDisplay();
+                        updateDisplay(); // Normal transition
                         startTimer();
                     } else {
                         statusElement.textContent = "FINISHED";
                         resetProgress();
                         playNotificationSound();
+                        // updateDisplay(); // Color should already be set by resetProgress/stopTimer via updateDisplay
                     }
-                } else {
+                } else { // Was REST, now transitioning to WORK (e.g. after rest, next round starts)
                     isWork = true;
                     timeLeft = roundDuration;
                     statusElement.textContent = "WORK";
-                    updateDisplay();
+                    updateDisplay(true); // <<< INSTANT transition for REST to WORK
                     startTimer();
                 }
             }
@@ -894,16 +895,15 @@
             clearInterval(timer);
             stopProgressAnimation();
             // Clean up effects when timer is stopped
-            if (timerElement) {
-                timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-            }
-            if (glowFilter) { // Reset glow to default
+            // Heartbeat classes are already removed by the animate function's logic when not in specific states.
+            // Explicitly reset glow to a non-oscillating default.
+            if (glowFilter) {
                 glowFilter.setAttribute('stdDeviation', '4');
             }
         }
 
         function resetTimer() {
-            stopTimer(); // This will also clear effects
+            stopTimer(); // This will also clear effects like resetting glow
             isRunning = false;
             currentRound = 1;
             isWork = false;
@@ -1445,6 +1445,7 @@
                 updateVolumeDisplay(masterVolumeValueDisplay, this.value);
                 applyMasterVolume();
                 updateMuteButtonState();
+                updateSliderFill(this, parseInt(this.min), parseInt(this.max));
             });
             masterVolumeMinusBtn.addEventListener('click', function() {
                 let currentValue = parseInt(masterVolumeSlider.value);
@@ -1454,6 +1455,7 @@
                 updateVolumeDisplay(masterVolumeValueDisplay, newValue);
                 applyMasterVolume();
                 updateMuteButtonState();
+                updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
             });
             masterVolumePlusBtn.addEventListener('click', function() {
                 let currentValue = parseInt(masterVolumeSlider.value);
@@ -1463,6 +1465,7 @@
                 updateVolumeDisplay(masterVolumeValueDisplay, newValue);
                 applyMasterVolume();
                 updateMuteButtonState();
+                updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
             });
 
             // Notification Volume Slider
@@ -1470,6 +1473,7 @@
                 notificationVolume = parseInt(this.value) / 100;
                 updateVolumeDisplay(notificationVolumeValueDisplay, this.value);
                 applyMasterVolume();
+                updateSliderFill(this, parseInt(this.min), parseInt(this.max));
             });
             notificationVolumeMinusBtn.addEventListener('click', function() {
                 let currentValue = parseInt(notificationVolumeSlider.value);
@@ -1478,6 +1482,7 @@
                 notificationVolume = newValue / 100;
                 updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
                 applyMasterVolume();
+                updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
             });
             notificationVolumePlusBtn.addEventListener('click', function() {
                 let currentValue = parseInt(notificationVolumeSlider.value);
@@ -1486,6 +1491,7 @@
                 notificationVolume = newValue / 100;
                 updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
                 applyMasterVolume();
+                updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
             });
 
             // Mute Button
@@ -1500,6 +1506,9 @@
             updateVolumeDisplay(notificationVolumeValueDisplay, notificationVolumeSlider.value);
             applyMasterVolume();
             updateMuteButtonState();
+            // Set initial fill for sound sliders
+            if (masterVolumeSlider) updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max));
+            if (notificationVolumeSlider) updateSliderFill(notificationVolumeSlider, parseInt(notificationVolumeSlider.min), parseInt(notificationVolumeSlider.max));
         }
 
         function applyMasterVolume() {
