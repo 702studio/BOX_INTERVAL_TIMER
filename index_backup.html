@@ -11,7 +11,7 @@
             background-color: #1A1A1A;
             color: white;
         }
-        
+
         /* Progress circle tasarımı */
         .timer-circle-container {
             position: relative;
@@ -19,7 +19,7 @@
             height: 100%;
             overflow: visible;
         }
-        
+
         .timer-circle-bg {
             width: 100%;
             height: 100%;
@@ -28,12 +28,12 @@
             box-sizing: border-box;
             position: relative;
         }
-        
+
         /* İçe doğru ışıma efekti için arka plan katmanı */
         .timer-circle-bg::after {
             display: none; /* İçe doğru ışıma efektini gizliyorum */
         }
-        
+
         .progress-ring {
             position: absolute;
             top: 0;
@@ -41,33 +41,33 @@
             width: 100%;
             height: 100%;
         }
-        
+
         /* SVG Filtreler */
         svg {
-            /* --progress-color: #ff4444; */ /* Removed as JS will handle color directly */
+            --progress-color: #ff4444;
         }
-        
+
         /* Progress çizgisi */
         .progress-ring__circle {
             fill: transparent;
-            /* stroke: var(--progress-color); */ /* Removed as JS will handle color directly */
+            stroke: var(--progress-color);
             stroke-width: 3;
             stroke-linecap: round;
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
-            transition: stroke 0.5s ease-in-out; /* Added for smooth color change */
+            transition: none;
         }
-        
+
         /* İç ışıma dairesi (daha büyük fill değeri) */
         .progress-ring-inner-glow {
             display: none; /* İç ışıma dairesini gizliyorum */
         }
-        
+
         /* İkinci iç ışıma katmanı (daha yoğun) */
         .progress-ring-inner-glow-intense {
             display: none; /* İkinci iç ışıma katmanını gizliyorum */
         }
-        
+
         /* Eski stil tanımları */
         .slider {
             -webkit-appearance: none;
@@ -178,7 +178,7 @@
             border: 2px solid #ff4444;
             box-shadow: inset 0 0 8px 2px rgba(255, 68, 68, 0.5);
         }
-        
+
         /* Button styles - Daha net ve kesin kontroller */
         .button {
             transition: all 0.3s ease;
@@ -188,12 +188,12 @@
             line-height: 20px; /* İçerik dikey ortalama */
             box-sizing: border-box; /* border'ın boyuta dahil olmasını sağla */
         }
-        
+
         .button:active {
             transform: none !important; /* Aktif durumda bile büyümeyi engelle */
             box-shadow: inset 0 0 12px 3px rgba(255, 68, 68, 0.4) !important;
         }
-        
+
         /* Sadece içe doğru ışıyan saber glow efekti */
         .saber-glow {
             position: relative;
@@ -201,13 +201,13 @@
             transform: none !important; /* Büyümeyi engelle */
             border: none !important; /* Border'ı kaldır */
         }
-        
+
         .saber-glow:hover {
             /* background-color: #484848; */ /* Hover durumunda bg değişimini kaldırdım */
             box-shadow: inset 0 0 10px 2px rgba(255, 68, 68, 0.4);
             transform: none !important; /* Hover durumunda bile büyümeyi engelle */
         }
-        
+
         .saber-glow::after {
             content: '';
             position: absolute;
@@ -223,38 +223,18 @@
             pointer-events: none;
             z-index: 10;
         }
-        
+
         .saber-glow:hover::after {
             opacity: 1;
             border-color: rgba(255, 68, 68, 0.4);
         }
-        
+
         /* Aktif buton için özel stil */
         .active-button {
             background-color: #484848 !important;
             box-shadow: inset 0 0 12px 3px rgba(255, 68, 68, 0.4) !important;
             transform: none !important; /* Active durumunda bile büyümeyi engelle */
             border: none !important; /* Border'ı kesinlikle kaldır */
-        }
-
-        /* Heartbeat Animations for Timer Text */
-        @keyframes heartbeat-normal {
-            0% { transform: scale(1); }
-            10% { transform: scale(1.03); }
-            20% { transform: scale(1); }
-            100% { transform: scale(1); }
-        }
-        @keyframes heartbeat-peak {
-            0% { transform: scale(1); }
-            10% { transform: scale(1.06); }
-            20% { transform: scale(1); }
-            100% { transform: scale(1); }
-        }
-        .heartbeat-effect-normal {
-            animation: heartbeat-normal 1.2s infinite ease-in-out;
-        }
-        .heartbeat-effect-peak {
-            animation: heartbeat-peak 0.8s infinite ease-in-out;
         }
 
         /* Yeni slider tasarımı */
@@ -423,7 +403,7 @@
             width: 100%;
             justify-content: center;
         }
-        
+
         .preset-btn {
             background-color: #333;
             color: #888;
@@ -436,12 +416,12 @@
             min-width: 36px;
             text-align: center;
         }
-        
+
         .preset-btn:hover {
             background-color: #444;
             color: #ccc;
         }
-        
+
         .preset-btn.active {
             background-color: rgba(255, 68, 68, 0.2);
             color: #ff4444;
@@ -449,15 +429,14 @@
     </style>
 </head>
 <body class="font-jetbrains bg-custom">
-    <div class="container mx-auto px-4 py-4 max-w-xl flex justify-center">
-        <div class="bg-custom rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-700 w-full flex flex-col min-h-screen">
-            <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
-            
-            <div class="flex items-center justify-center flex-grow">
-                <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
-                    <!-- SVG Progress Circle -->
-                    <div class="timer-circle-container">
-                        <div id="timer-circle-bg" class="timer-circle-bg"></div>
+    <div class="container mx-auto px-4 py-4 md:py-8 max-w-xl flex justify-center">
+        <div class="bg-custom rounded-2xl shadow-lg p-4 md:p-6 lg:p-8 border border-gray-700 w-full">
+            <h1 class="text-3xl md:text-4xl font-normal text-white mb-6 md:mb-8 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+
+            <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto mb-6 md:mb-8 aspect-square">
+                <!-- SVG Progress Circle -->
+                <div class="timer-circle-container">
+                    <div id="timer-circle-bg" class="timer-circle-bg"></div>
                     <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 384 384" style="overflow: visible;">
                         <!-- SVG Filtreler -->
                         <defs>
@@ -466,12 +445,12 @@
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
                             </filter>
                         </defs>
-                        
+
                         <!-- Ana progress çemberi -->
                         <circle
                             class="progress-ring__circle"
                             id="progress-ring-circle"
-                            /* stroke="#ff4444" */ /* Removed as JS will handle color directly */
+                            stroke="#ff4444"
                             stroke-width="3"
                             fill="transparent"
                             r="190"
@@ -492,16 +471,17 @@
                     </div>
                 </div>
             </div>
-            </div>
 
-            <div class="flex flex-row gap-0 w-full mt-auto p-2">
-                <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase rounded-l-md">
+            <div class="flex flex-row gap-0">
+                <button id="start" class="flex-1 px-4 py-2 bg-[#404040] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
                     START
                 </button>
-                <button id="reset" class="flex-1 px-3 py-2 bg-[#333333] text-white font-normal hover-stroke saber-glow button transition-all uppercase">
+                <button id="reset" class="flex-1 px-4 py-2 bg-[#333333] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
                     RESET
                 </button>
-                <button id="settingsBtn" class="flex-1 px-3 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase rounded-r-md">
+            </div>
+            <div class="text-center">
+                <button id="settingsBtn" class="w-full px-4 py-2 bg-[#262626] text-white rounded-none font-normal hover-stroke saber-glow button transition-all uppercase">
                     SETTINGS
                 </button>
             </div>
@@ -571,41 +551,6 @@
                             <div class="presets-container" id="roundsPresets"></div>
                         </div>
                     </div>
-
-                    <!-- Sound Controls -->
-                    <div class="space-y-3 pt-4 border-t border-gray-600 mt-6">
-                        <h3 class="text-md font-medium uppercase text-gray-400">Sound Settings</h3>
-                        <div class="flex justify-between items-center">
-                            <label class="text-sm font-medium uppercase">Master Volume</label>
-                            <span id="masterVolumeValue" class="text-right ml-2">100%</span>
-                        </div>
-                        <div class="slider-container">
-                            <div class="slider-with-buttons">
-                                <button class="slider-btn minus" id="masterVolumeMinus">-</button>
-                                <input type="range" id="masterVolume" class="slider" min="0" max="100" step="1" value="100">
-                                <button class="slider-btn plus" id="masterVolumePlus">+</button>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-center mt-3">
-                            <label class="text-sm font-medium uppercase">Notification Sound</label>
-                            <span id="notificationVolumeValue" class="text-right ml-2">100%</span>
-                        </div>
-                        <div class="slider-container">
-                             <div class="slider-with-buttons">
-                                <button class="slider-btn minus" id="notificationVolumeMinus">-</button>
-                                <input type="range" id="notificationVolume" class="slider" min="0" max="100" step="1" value="100">
-                                <button class="slider-btn plus" id="notificationVolumePlus">+</button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-4">
-                            <label for="muteButton" class="text-sm font-medium uppercase">Mute All Sounds</label>
-                            <button id="muteButton" class="px-4 py-2 bg-[#262626] text-white rounded-md font-normal hover-stroke saber-glow button transition-all uppercase text-xs">
-                                MUTE
-                            </button>
-                        </div>
-                    </div>
                 </div>
                 <div class="mt-6 flex justify-between gap-0">
                     <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
@@ -632,74 +577,35 @@
         let prepDuration = 5; // GET READY süresi için yeni değişken
         let totalRounds = 3;
 
-        // Sound control variables
-        let masterVolume = 1; // 0 to 1 (0% to 100%)
-        let notificationVolume = 1; // 0 to 1 (0% to 100%)
-        let isMuted = false;
-
-        // Progress Ring Colors
-        const PROGRESS_COLOR_WORK = '#ff4444'; // Red
-        const PROGRESS_COLOR_REST = '#4466ff'; // Blue
-        const PROGRESS_COLOR_PREP = '#ffffff'; // White
-        
         // Zamanlama için milisaniye cinsinden değerler
         let totalDurationMs = 0;
         let timeLeftMs = 0;
         let lastUpdateTime = 0;
 
         timeLeft = roundDuration;
-        
+
         const timerElement = document.getElementById('timer');
         const statusElement = document.getElementById('timer-status');
         const roundElement = document.getElementById('round-info');
 
-        // Audio elements
-        const notificationSoundElement = document.getElementById('notificationSound');
-
-        // Sound control UI elements
-        const masterVolumeSlider = document.getElementById('masterVolume');
-        const masterVolumeValueDisplay = document.getElementById('masterVolumeValue');
-        const masterVolumeMinusBtn = document.getElementById('masterVolumeMinus');
-        const masterVolumePlusBtn = document.getElementById('masterVolumePlus');
-
-        const notificationVolumeSlider = document.getElementById('notificationVolume');
-        const notificationVolumeValueDisplay = document.getElementById('notificationVolumeValue');
-        const notificationVolumeMinusBtn = document.getElementById('notificationVolumeMinus');
-        const notificationVolumePlusBtn = document.getElementById('notificationVolumePlus');
-
-        const muteButton = document.getElementById('muteButton');
-        
         // SVG Progress Circle
         const circle = document.getElementById('progress-ring-circle');
         const radius = 190;
         const circumference = 2 * Math.PI * radius;
-        
+
         // SVG çember için başlangıç değerleri
         circle.style.strokeDasharray = circumference;
         circle.style.strokeDashoffset = 0;
-        
+
         // Ekran güncelleme fonksiyonu - sayacın değerini ve ilerleme çubuğunu günceller
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
+
             roundElement.textContent = ` ${currentRound.toString().padStart(2, '0')} / ${totalRounds.toString().padStart(2, '0')}`;
-            updateRingColorAndEffects(); // Update ring color based on state
         }
 
-        function updateRingColorAndEffects() {
-            if (!circle) return;
-
-            if (isPreparation) {
-                circle.style.stroke = PROGRESS_COLOR_PREP;
-            } else if (isWork) {
-                circle.style.stroke = PROGRESS_COLOR_WORK;
-            } else { // Implicitly REST
-                circle.style.stroke = PROGRESS_COLOR_REST;
-            }
-        }
-        
         // İlerleme çemberini gerçek-zamanlı animasyon ile hareket ettir
         let animationId = null;
         let glowFilter = null;
@@ -707,88 +613,68 @@
         function startProgressAnimation() {
             // Toplam süreyi belirle (milisaniye)
             totalDurationMs = isPreparation ? prepDuration * 1000 : (isWork ? roundDuration * 1000 : restDuration * 1000);
-            
+
             // Kalan süreyi milisaniye olarak ayarla
             timeLeftMs = timeLeft * 1000;
-            
+
             // İlk çağrıda başlangıç zamanını kaydet
             lastUpdateTime = performance.now();
-            
+
             // Varsa önceki animasyonu durdur
             if (animationId) {
                 cancelAnimationFrame(animationId);
             }
-            
+
             // SVG filtreyi oluştur
             glowFilter = document.querySelector('#glow feGaussianBlur');
-            
+
             // Sürekli animasyon fonksiyonu
             function animate(timestamp) {
                 if (!isRunning) return;
-                
+
                 // Başlangıçtan bu yana geçen süreyi hesapla
                 const elapsed = timestamp - lastUpdateTime;
                 lastUpdateTime = timestamp;
-                
+
                 // Kalan süreyi azalt
                 timeLeftMs = Math.max(0, timeLeftMs - elapsed);
-                
+
                 // İlerleme yüzdesini hesapla (0-100 arası)
                 const percent = (timeLeftMs / totalDurationMs) * 100;
-                
+
                 // Süre görüntüsünü yalnızca saniye değiştiğinde güncelle (performans için)
                 const newTimeLeft = Math.ceil(timeLeftMs / 1000);
                 if (newTimeLeft !== timeLeft) {
                     timeLeft = newTimeLeft;
                     updateDisplay();
                 }
-                
+
                 // Progress çemberini ayarla
                 const offset = circumference * (1 - percent / 100);
                 circle.style.strokeDashoffset = offset;
-                
-                // Glow and Heartbeat effects based on time left in WORK state
-                if (isWork && !isPreparation) {
-                    if (timeLeftMs <= 15000) { // Last 15 seconds (Peak)
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '12'); // Intense glow
-                        if (timerElement) { // timerElement is already document.getElementById('timer')
-                            timerElement.classList.remove('heartbeat-effect-normal');
-                            timerElement.classList.add('heartbeat-effect-peak');
-                        }
-                    } else if (timeLeftMs <= 30000) { // Last 30 seconds (Normal)
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '8'); // Enhanced glow
-                        if (timerElement) {
-                            timerElement.classList.remove('heartbeat-effect-peak');
-                            timerElement.classList.add('heartbeat-effect-normal');
-                        }
-                    } else { // Work state, but more than 30 seconds left
-                        if (glowFilter) glowFilter.setAttribute('stdDeviation', '4'); // Default work glow
-                        if (timerElement) {
-                            timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-                        }
-                    }
-                } else { // Not in active work state (prep, rest, or finished)
-                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '4'); // Default non-work glow
-                    if (timerElement) {
-                        timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-                    }
+
+                // Son 30 saniye kaldıysa yanıp sönme efektini artır
+                if (!isPreparation && timeLeftMs <= 30000) {
+                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '6');
+                } else {
+                    if (glowFilter) glowFilter.setAttribute('stdDeviation', '4');
                 }
-                
+
                 // Yeni frame için kendini tekrar çağır
                 animationId = requestAnimationFrame(animate);
             }
-            
+
             // Animasyonu başlat
             animationId = requestAnimationFrame(animate);
         }
-        
+
         function stopProgressAnimation() {
             if (animationId) {
                 cancelAnimationFrame(animationId);
                 animationId = null;
             }
         }
-        
+
         function resetProgress() {
             circle.style.strokeDashoffset = 0;
         }
@@ -796,7 +682,7 @@
         function updateDisplayValue(sliderId, displayId) {
             const slider = document.getElementById(sliderId);
             const display = document.getElementById(displayId);
-            
+
             if (sliderId === 'roundDuration') {
                 const minutes = Math.floor(roundDuration / 60);
                 const seconds = roundDuration % 60;
@@ -827,25 +713,25 @@
                 stopTimer();
             }
         }
-        
+
         function startTimer() {
             isRunning = true;
             document.getElementById('start').textContent = 'PAUSE';
             document.getElementById('start').classList.add('active-button');
-            
+
             // Hazırlık aşamasındaysak
             if (isPreparation) {
                 timeLeft = prepDuration; // Kullanıcının ayarladığı hazırlık süresi
+                updateDisplay();
             }
-            updateDisplay(); // This will also call updateRingColorAndEffects
-            
+
             // Pürüzsüz animasyonu başlat
             startProgressAnimation();
-            
+
             // Saniye timerı
             timer = setInterval(countdown, 1000);
         }
-        
+
         function countdown() {
             if (timeLeft <= 0) {
                 clearInterval(timer);
@@ -853,7 +739,7 @@
                 isRunning = false;
                 document.getElementById('start').textContent = 'START';
                 document.getElementById('start').classList.remove('active-button');
-                
+
                 if (isPreparation) {
                     isPreparation = false;
                     isWork = true;
@@ -862,8 +748,8 @@
                     updateDisplay();
                     startTimer();
                 } else if (isWork) {
-                    playNotificationSound();
-                    
+                    document.getElementById('notificationSound').play();
+
                     if (currentRound < totalRounds) {
                         currentRound++;
                         isWork = false;
@@ -874,7 +760,7 @@
                     } else {
                         statusElement.textContent = "FINISHED";
                         resetProgress();
-                        playNotificationSound();
+                        document.getElementById('notificationSound').play();
                     }
                 } else {
                     isWork = true;
@@ -893,17 +779,10 @@
             document.getElementById('start').classList.remove('active-button');
             clearInterval(timer);
             stopProgressAnimation();
-            // Clean up effects when timer is stopped
-            if (timerElement) {
-                timerElement.classList.remove('heartbeat-effect-normal', 'heartbeat-effect-peak');
-            }
-            if (glowFilter) { // Reset glow to default
-                glowFilter.setAttribute('stdDeviation', '4');
-            }
         }
 
         function resetTimer() {
-            stopTimer(); // This will also clear effects
+            stopTimer();
             isRunning = false;
             currentRound = 1;
             isWork = false;
@@ -919,14 +798,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             resetProgress();
             updateDisplay();
-            
+
             // Slider'ları ayarla
             setupSliders();
-            setupSoundControls(); // Initialize sound controls
-            
+
             // Yeni butonları da ayarla
             setupExtraButtons();
-            
+
             // Presetleri oluştur
             setTimeout(() => {
                 createPresets('roundPresets', [60, 120, 180, 240, 300], roundDuration, 'roundDuration'); // 1m, 2m, 3m, 4m, 5m
@@ -934,7 +812,7 @@
                 createPresets('prepPresets', [5, 10, 15, 30], prepDuration, 'prepDuration'); // 5s, 10s, 15s, 30s
                 createPresets('roundsPresets', [3, 5, 8, 10, 12, 15], totalRounds, 'totalRounds'); // 3, 5, 8, 10, 12, 15
             }, 100);
-            
+
             // Pencere yeniden boyutlandırıldığında etiketleri yenile
             window.addEventListener('resize', function() {
                 // Minimal gecikme ile etiketleri yeniden oluştur
@@ -945,7 +823,7 @@
                     createPresets('roundsPresets', [3, 5, 8, 10, 12, 15], totalRounds, 'totalRounds');
                 }, 100);
             });
-            
+
             // Mobil cihazlar için ekran yönlendirmesi
             if ('orientation' in screen) {
                 screen.orientation.lock('portrait').catch(function(error) {
@@ -954,11 +832,11 @@
                 });
             }
         });
-        
+
         document.getElementById('start').addEventListener('click', toggleTimer);
         document.getElementById('reset').addEventListener('click', resetTimer);
         document.getElementById('settingsBtn').addEventListener('click', showSettings);
-        
+
         document.getElementById('roundDuration').addEventListener('input', function() {
             updateDisplayValue('roundDuration', 'roundDurationValue');
         });
@@ -991,30 +869,30 @@
             const restSnapValues = [30, 45, 60, 90]; // 30s, 45s, 60s, 90s
             const prepSnapValues = [5, 10, 15, 30]; // 5s, 10s, 15s, 30s
             const roundsSnapValues = [3, 5, 8, 10, 12, 15]; // 3, 5, 8, 10, 12, 15
-            
+
             // Yakınlık eşiği (saniye) - bu değerden daha yakınsa değere snap eder
             const snapThreshold = 10; // 10 saniyeden daha yakınsa snap
             const prepSnapThreshold = 1; // 1 saniyeden daha yakınsa snap
             const roundsSnapThreshold = 2; // 2 rounddan daha yakınsa snap
-            
+
             // Round Duration slider ayarları
             setupRoundDurationSlider(snapValues, snapThreshold);
-            
+
             // Rest Duration slider ayarları
             setupRestDurationSlider(restSnapValues, snapThreshold);
-            
+
             // Prep Duration slider ayarları
             setupPrepDurationSlider(prepSnapValues, prepSnapThreshold);
-            
+
             // Total Rounds slider ayarları
             setupTotalRoundsSlider(roundsSnapValues, roundsSnapThreshold);
-            
+
             // Başlangıç değerlerini ayarla
             roundDuration = parseInt(document.getElementById('roundDuration').value);
             restDuration = parseInt(document.getElementById('restDuration').value);
             prepDuration = parseInt(document.getElementById('prepDuration').value);
             totalRounds = parseInt(document.getElementById('totalRounds').value);
-            
+
             // Değerleri göster
             updateDisplayValue('roundDuration', 'roundDurationValue');
             updateDisplayValue('restDuration', 'restDurationValue');
@@ -1027,56 +905,56 @@
             const slider = document.getElementById('roundDuration');
             const minus = document.getElementById('roundMinus');
             const plus = document.getElementById('roundPlus');
-            
+
             // Slider dolum rengini ayarla
             updateSliderFill(slider, 5, 360);
-            
-            // Değer değiştiğinde 
+
+            // Değer değiştiğinde
             slider.addEventListener('input', function() {
                 roundDuration = parseInt(this.value);
                 updateDisplayValue('roundDuration', 'roundDurationValue');
                 updateSliderFill(this, 5, 360);
-                
+
                 // Preset butonlarını güncelle
                 updateActivePreset('roundPresets', roundDuration);
             });
-            
+
             // Değer bırakıldığında snap işlemi yap
             slider.addEventListener('change', function() {
                 const value = parseInt(this.value);
-                
+
                 // En yakın snap değerini bul
                 let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
-                
+
                 if (closestSnap !== null) {
                     roundDuration = closestSnap;
                     this.value = closestSnap;
                 } else {
                     roundDuration = value;
                 }
-                
+
                 updateDisplayValue('roundDuration', 'roundDurationValue');
                 updateSliderFill(this, 5, 360);
             });
-            
+
             // Düğme kontrolleri
             minus.addEventListener('click', function() {
                 if (roundDuration > 5) {
                     roundDuration = Math.max(5, roundDuration - 5);
                     slider.value = roundDuration;
                     updateDisplayValue('roundDuration', 'roundDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundPresets', roundDuration);
                 }
             });
-            
+
             plus.addEventListener('click', function() {
                 if (roundDuration < 360) {
                     roundDuration = Math.min(360, roundDuration + 5);
                     slider.value = roundDuration;
                     updateDisplayValue('roundDuration', 'roundDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundPresets', roundDuration);
                 }
@@ -1088,56 +966,56 @@
             const slider = document.getElementById('restDuration');
             const minus = document.getElementById('restMinus');
             const plus = document.getElementById('restPlus');
-            
+
             // Slider dolum rengini ayarla
             updateSliderFill(slider, 5, 120);
-            
-            // Değer değiştiğinde 
+
+            // Değer değiştiğinde
             slider.addEventListener('input', function() {
                 restDuration = parseInt(this.value);
                 updateDisplayValue('restDuration', 'restDurationValue');
                 updateSliderFill(this, 5, 120);
-                
+
                 // Preset butonlarını güncelle
                 updateActivePreset('restPresets', restDuration);
             });
-            
+
             // Değer bırakıldığında snap işlemi yap
             slider.addEventListener('change', function() {
                 const value = parseInt(this.value);
-                
+
                 // En yakın snap değerini bul
                 let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
-                
+
                 if (closestSnap !== null) {
                     restDuration = closestSnap;
                     this.value = closestSnap;
                 } else {
                     restDuration = value;
                 }
-                
+
                 updateDisplayValue('restDuration', 'restDurationValue');
                 updateSliderFill(this, 5, 120);
             });
-            
+
             // Düğme kontrolleri
             minus.addEventListener('click', function() {
                 if (restDuration > 5) {
                     restDuration = Math.max(5, restDuration - 5);
                     slider.value = restDuration;
                     updateDisplayValue('restDuration', 'restDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('restPresets', restDuration);
                 }
             });
-            
+
             plus.addEventListener('click', function() {
                 if (restDuration < 120) {
                     restDuration = Math.min(120, restDuration + 5);
                     slider.value = restDuration;
                     updateDisplayValue('restDuration', 'restDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('restPresets', restDuration);
                 }
@@ -1149,56 +1027,56 @@
             const slider = document.getElementById('prepDuration');
             const minus = document.getElementById('prepMinus');
             const plus = document.getElementById('prepPlus');
-            
+
             // Slider dolum rengini ayarla
             updateSliderFill(slider, 3, 30);
-            
-            // Değer değiştiğinde 
+
+            // Değer değiştiğinde
             slider.addEventListener('input', function() {
                 prepDuration = parseInt(this.value);
                 updateDisplayValue('prepDuration', 'prepDurationValue');
                 updateSliderFill(this, 3, 30);
-                
+
                 // Preset butonlarını güncelle
                 updateActivePreset('prepPresets', prepDuration);
             });
-            
+
             // Değer bırakıldığında snap işlemi yap
             slider.addEventListener('change', function() {
                 const value = parseInt(this.value);
-                
+
                 // En yakın snap değerini bul
                 let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
-                
+
                 if (closestSnap !== null) {
                     prepDuration = closestSnap;
                     this.value = closestSnap;
                 } else {
                     prepDuration = value;
                 }
-                
+
                 updateDisplayValue('prepDuration', 'prepDurationValue');
                 updateSliderFill(this, 3, 30);
             });
-            
+
             // Düğme kontrolleri
             minus.addEventListener('click', function() {
                 if (prepDuration > 3) {
                     prepDuration = Math.max(3, prepDuration - 1);
                     slider.value = prepDuration;
                     updateDisplayValue('prepDuration', 'prepDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('prepPresets', prepDuration);
                 }
             });
-            
+
             plus.addEventListener('click', function() {
                 if (prepDuration < 30) {
                     prepDuration = Math.min(30, prepDuration + 1);
                     slider.value = prepDuration;
                     updateDisplayValue('prepDuration', 'prepDurationValue');
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('prepPresets', prepDuration);
                 }
@@ -1210,58 +1088,58 @@
             const slider = document.getElementById('totalRounds');
             const minus = document.getElementById('roundsMinus');
             const plus = document.getElementById('roundsPlus');
-            
+
             // Slider dolum rengini ayarla
             updateSliderFill(slider, 1, 15);
-            
-            // Değer değiştiğinde 
+
+            // Değer değiştiğinde
             slider.addEventListener('input', function() {
                 totalRounds = parseInt(this.value);
                 updateDisplayValue('totalRounds', 'totalRoundsValue');
                 updateSliderFill(this, 1, 15);
-                
+
                 // Preset butonlarını güncelle
                 updateActivePreset('roundsPresets', totalRounds);
             });
-            
+
             // Değer bırakıldığında snap işlemi yap
             slider.addEventListener('change', function() {
                 const value = parseInt(this.value);
-                
+
                 // En yakın snap değerini bul
                 let closestSnap = findClosestSnap(value, snapValues, snapThreshold);
-                
+
                 if (closestSnap !== null) {
                     totalRounds = closestSnap;
                     this.value = closestSnap;
                 } else {
                     totalRounds = value;
                 }
-                
+
                 updateDisplayValue('totalRounds', 'totalRoundsValue');
                 updateSliderFill(this, 1, 15);
             });
-            
+
             // Düğme kontrolleri - 1'er 1'er artıp azalacak şekilde
             minus.addEventListener('click', function() {
                 if (totalRounds > 1) {
                     totalRounds = Math.max(1, totalRounds - 1);
                     slider.value = totalRounds;
                     updateDisplayValue('totalRounds', 'totalRoundsValue');
-                    updateSliderFill(slider, parseInt(slider.min), parseInt(slider.max));
-                    
+                    updateSliderFill(slider, 1, 15);
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundsPresets', totalRounds);
                 }
             });
-            
+
             plus.addEventListener('click', function() {
                 if (totalRounds < 15) {
                     totalRounds = Math.min(15, totalRounds + 1);
                     slider.value = totalRounds;
                     updateDisplayValue('totalRounds', 'totalRoundsValue');
                     updateSliderFill(slider, 1, 15);
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundsPresets', totalRounds);
                 }
@@ -1279,7 +1157,7 @@
         function createTicks(containerId, min, max, snapValues) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-            
+
             // Snap değerlerine göre tick işaretleri ekle
             for (let value of snapValues) {
                 if (value >= min && value <= max) {
@@ -1309,7 +1187,7 @@
         function findClosestSnapIndex(value, snapValues) {
             let closestIndex = 0;
             let minDistance = Math.abs(value - snapValues[0]);
-            
+
             for (let i = 1; i < snapValues.length; i++) {
                 const distance = Math.abs(value - snapValues[i]);
                 if (distance < minDistance) {
@@ -1317,7 +1195,7 @@
                     closestIndex = i;
                 }
             }
-            
+
             return closestIndex;
         }
 
@@ -1332,19 +1210,19 @@
         function highlightClosestSnapLabel(containerId, value, snapValues, threshold) {
             const container = document.getElementById(containerId);
             if (!container) return; // Container yoksa işlemi atla
-            
+
             const labels = container.querySelectorAll('.snap-point-label');
-            
+
             // Önce tüm etiketlerin vurgusunu kaldır
             labels.forEach(label => {
                 label.style.color = '#666';
                 label.style.backgroundColor = 'transparent';
                 label.classList.remove('active');
             });
-            
+
             // Tam eşleşen değeri bul
             let exactMatchFound = false;
-            
+
             for (let i = 0; i < labels.length; i++) {
                 const labelValue = parseInt(labels[i].dataset.value);
                 if (labelValue === value) {
@@ -1356,22 +1234,22 @@
                     break;
                 }
             }
-            
+
             // Tam eşleşme yoksa, en yakın değeri vurgula
             if (!exactMatchFound) {
                 let closestIndex = 0;
                 let minDistance = Infinity;
-                
+
                 for (let i = 0; i < labels.length; i++) {
                     const labelValue = parseInt(labels[i].dataset.value);
                     const distance = Math.abs(value - labelValue);
-                    
+
                     if (distance < minDistance) {
                         minDistance = distance;
                         closestIndex = i;
                     }
                 }
-                
+
                 // Eşik içindeyse vurgula
                 if (minDistance <= threshold) {
                     labels[closestIndex].style.color = '#ff4444';
@@ -1393,7 +1271,7 @@
                     slider.dispatchEvent(event);
                 }
             });
-            
+
             document.getElementById('prepPlus').addEventListener('click', function() {
                 const slider = document.getElementById('prepDuration');
                 if (parseInt(slider.value) < parseInt(slider.max)) {
@@ -1404,7 +1282,7 @@
                     slider.dispatchEvent(event);
                 }
             });
-            
+
             document.getElementById('roundsMinus').addEventListener('click', function() {
                 const slider = document.getElementById('totalRounds');
                 if (parseInt(slider.value) > parseInt(slider.min)) {
@@ -1412,12 +1290,12 @@
                     totalRounds = parseInt(slider.value);
                     updateDisplayValue('totalRounds', 'totalRoundsValue');
                     updateSliderFill(slider, 1, 15);
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundsPresets', totalRounds);
                 }
             });
-            
+
             document.getElementById('roundsPlus').addEventListener('click', function() {
                 const slider = document.getElementById('totalRounds');
                 if (parseInt(slider.value) < parseInt(slider.max)) {
@@ -1425,135 +1303,31 @@
                     totalRounds = parseInt(slider.value);
                     updateDisplayValue('totalRounds', 'totalRoundsValue');
                     updateSliderFill(slider, 1, 15);
-                    
+
                     // Preset butonlarını güncelle
                     updateActivePreset('roundsPresets', totalRounds);
                 }
             });
         }
 
-        // --- Sound Control Functions ---
-        function setupSoundControls() {
-            if (!masterVolumeSlider) { // Check if elements are loaded
-                console.warn("Sound control elements (masterVolumeSlider) not found. Skipping setupSoundControls.");
-                return;
-            }
-
-            // Master Volume Slider
-            masterVolumeSlider.addEventListener('input', function() {
-                masterVolume = parseInt(this.value) / 100;
-                updateVolumeDisplay(masterVolumeValueDisplay, this.value);
-                applyMasterVolume();
-                updateMuteButtonState();
-            });
-            masterVolumeMinusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(masterVolumeSlider.value);
-                let newValue = Math.max(0, currentValue - 5);
-                masterVolumeSlider.value = newValue;
-                masterVolume = newValue / 100;
-                updateVolumeDisplay(masterVolumeValueDisplay, newValue);
-                applyMasterVolume();
-                updateMuteButtonState();
-            });
-            masterVolumePlusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(masterVolumeSlider.value);
-                let newValue = Math.min(100, currentValue + 5);
-                masterVolumeSlider.value = newValue;
-                masterVolume = newValue / 100;
-                updateVolumeDisplay(masterVolumeValueDisplay, newValue);
-                applyMasterVolume();
-                updateMuteButtonState();
-            });
-
-            // Notification Volume Slider
-            notificationVolumeSlider.addEventListener('input', function() {
-                notificationVolume = parseInt(this.value) / 100;
-                updateVolumeDisplay(notificationVolumeValueDisplay, this.value);
-                applyMasterVolume();
-            });
-            notificationVolumeMinusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(notificationVolumeSlider.value);
-                let newValue = Math.max(0, currentValue - 5);
-                notificationVolumeSlider.value = newValue;
-                notificationVolume = newValue / 100;
-                updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
-                applyMasterVolume();
-            });
-            notificationVolumePlusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(notificationVolumeSlider.value);
-                let newValue = Math.min(100, currentValue + 5);
-                notificationVolumeSlider.value = newValue;
-                notificationVolume = newValue / 100;
-                updateVolumeDisplay(notificationVolumeValueDisplay, newValue);
-                applyMasterVolume();
-            });
-
-            // Mute Button
-            muteButton.addEventListener('click', function() {
-                isMuted = !isMuted;
-                applyMasterVolume();
-                updateMuteButtonState();
-            });
-
-            // Initial UI Update
-            updateVolumeDisplay(masterVolumeValueDisplay, masterVolumeSlider.value);
-            updateVolumeDisplay(notificationVolumeValueDisplay, notificationVolumeSlider.value);
-            applyMasterVolume();
-            updateMuteButtonState();
-        }
-
-        function applyMasterVolume() {
-            if (!notificationSoundElement) return;
-            if (isMuted) {
-                notificationSoundElement.volume = 0;
-            } else {
-                let effectiveVolume = Math.max(0, Math.min(1, masterVolume * notificationVolume));
-                notificationSoundElement.volume = effectiveVolume;
-            }
-        }
-
-        function updateVolumeDisplay(element, value) {
-            if(element) element.textContent = `${value}%`;
-        }
-
-        function updateMuteButtonState() {
-            if (!muteButton) return;
-            if (isMuted || masterVolume === 0) {
-                muteButton.textContent = 'UNMUTE';
-                muteButton.classList.add('active-button');
-            } else {
-                muteButton.textContent = 'MUTE';
-                muteButton.classList.remove('active-button');
-            }
-        }
-
-        function playNotificationSound() {
-            if (!notificationSoundElement) return;
-            applyMasterVolume();
-            notificationSoundElement.play().catch(error => {
-                console.error("Error playing notification sound:", error);
-            });
-        }
-        // --- End of Sound Control Functions ---
-
         // Preset butonlarını oluşturma fonksiyonu
         function createPresets(containerId, presetValues, currentValue, sliderId) {
             const container = document.getElementById(containerId);
             if (!container) return;
-            
+
             container.innerHTML = '';
-            
+
             presetValues.forEach(value => {
                 const btn = document.createElement('button');
                 btn.className = 'preset-btn';
-                
+
                 if (value === currentValue) {
                     btn.classList.add('active');
                 }
-                
+
                 // Buton içeriğini ayarla
                 let btnText = '';
-                
+
                 if (containerId === 'prepPresets') {
                     btnText = `${value}s`;
                 } else if (containerId === 'roundsPresets') {
@@ -1570,58 +1344,58 @@
                         btnText = `${minutes}m`;
                     }
                 }
-                
+
                 btn.textContent = btnText;
-                
+
                 btn.addEventListener('click', function() {
                     // Slider değerini ayarla
                     const slider = document.getElementById(sliderId);
                     slider.value = value;
-                    
+
                     // Aktif sınıfını sadece tıklanan butona ver
                     container.querySelectorAll('.preset-btn').forEach(b => {
                         b.classList.remove('active');
                     });
                     this.classList.add('active');
-                    
-                    // İlgili değişkeni güncelle ve slider dolumunu ayarla
-                    const min = parseInt(slider.min);
-                    const max = parseInt(slider.max);
 
+                    // İlgili değişkeni güncelle
                     if (sliderId === 'roundDuration') {
                         roundDuration = value;
+                        updateSliderFill(slider, 5, 360);
                     } else if (sliderId === 'restDuration') {
                         restDuration = value;
+                        updateSliderFill(slider, 5, 120);
                     } else if (sliderId === 'prepDuration') {
                         prepDuration = value;
+                        updateSliderFill(slider, 3, 30);
                     } else if (sliderId === 'totalRounds') {
                         totalRounds = value;
+                        updateSliderFill(slider, 1, 15);
                     }
-                    updateSliderFill(slider, min, max);
-                    
+
                     // Input olayını tetikle
                     const event = new Event('input', { bubbles: true });
                     slider.dispatchEvent(event);
-                    
+
                     // Görüntülenen değeri güncelle
                     updateDisplayValue(slider.id, slider.id + 'Value');
                 });
-                
+
                 container.appendChild(btn);
             });
         }
-        
+
         // Slider değeri değiştiğinde ayrıca preset butonlarını da güncelle
         function updateActivePreset(containerId, value) {
             const container = document.getElementById(containerId);
             if (!container) return;
-            
+
             const buttons = container.querySelectorAll('.preset-btn');
             let exactMatch = false;
-            
+
             buttons.forEach(btn => {
                 const btnValue = parseBtnValue(btn.textContent);
-                
+
                 if (btnValue === value) {
                     btn.classList.add('active');
                     exactMatch = true;
@@ -1629,10 +1403,10 @@
                     btn.classList.remove('active');
                 }
             });
-            
+
             return exactMatch;
         }
-        
+
         // Buton metninden değeri çıkarma
         function parseBtnValue(text) {
             if (text.endsWith('s')) {
@@ -1645,4 +1419,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
