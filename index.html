@@ -499,11 +499,11 @@
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto">
-        <div class="p-0 sm:p-4 flex items-start sm:items-center justify-center min-h-screen">
+        <div class="p-0 sm:p-4 flex items-start sm:items-center justify-center h-full sm:min-h-screen">
             <div class="bg-custom w-full h-full flex flex-col p-4 sm:p-6 sm:h-auto sm:max-w-sm sm:rounded-xl sm:border sm:border-gray-700">
                 <div class="flex justify-between items-center mb-4 sm:mb-6">
                     <h2 class="text-xl font-bold uppercase text-center sm:text-left">SETTINGS</h2>
-                    <label for="muteToggle" class="relative inline-flex items-center cursor-pointer gap-2">
+                    <label for="muteToggle" class="relative inline-flex items-center cursor-pointer gap-2 whitespace-nowrap">
                         <input type="checkbox" id="muteToggle" class="sr-only peer">
                         <svg id="volume-on-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-300">
                           <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/>
@@ -607,7 +607,7 @@
                     </div>
                     </details>
                 </div>
-                <div class="flex flex-row w-full mt-auto gap-0 pt-4 border-t border-gray-600">
+                <div class="flex flex-row w-full mt-auto gap-0 pt-4 border-t border-gray-600 relative z-10">
                     <button id="cancelSettings" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-300 transition-all hover-stroke saber-glow button uppercase">
                         CANCEL
                     </button>
