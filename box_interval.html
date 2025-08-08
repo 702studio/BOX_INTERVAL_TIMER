@@ -63,7 +63,7 @@
     <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
         <div class="bg-custom p-0 w-full flex flex-col min-h-screen" style="padding-bottom: var(--main-bars-height);">
             <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
-            <div class="flex items-center justify-center flex-grow" style="min-height: calc(100svh - var(--main-bars-height));">
+            <div class="flex items-center justify-center flex-grow" style="min-height: calc(100dvh - var(--main-bars-height));">
                 <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
                     <div class="timer-circle-container">
                         <div id="timer-circle-bg" class="timer-circle-bg"></div>
@@ -91,7 +91,7 @@
     </div>
 
     <!-- Fixed Bottom Bar (Main) -->
-    <div class="fixed bottom-0 left-0 right-0 z-10 bg-custom" style="padding-bottom: env(safe-area-inset-bottom);"> <!-- Outer fixed bar -->
+    <div id="mainBars" class="fixed bottom-0 left-0 right-0 z-10 bg-custom" style="padding-bottom: env(safe-area-inset-bottom);"> <!-- Outer fixed bar -->
         <div class="max-w-xl mx-auto"> <!-- Inner centering container -->
             <div class="flex flex-col w-full"> <!-- Original button_rows_container, mt-auto removed -->
                 <!-- First Row -->
@@ -298,10 +298,17 @@
             const maxH = `calc(100vh - ${h}px - ${hh}px - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
             scrollArea.style.maxHeight = maxH;
         }
+        function matchMainBarsHeight(){
+            const mainBars = document.getElementById('mainBars');
+            if(!mainBars) return;
+            const h = Math.max(56, Math.round(mainBars.getBoundingClientRect().height));
+            document.documentElement.style.setProperty('--main-bars-height', h + 'px');
+        }
 
         document.addEventListener('DOMContentLoaded', function(){
             resetProgress(); updateDisplay();
             matchModalActionHeight();
+            matchMainBarsHeight();
             setupSliders(); setupSoundControls(); setupExtraButtons();
             // Slider dokunmatiklerinde dikey scroll'u engelle
             document.querySelectorAll('input[type="range"]').forEach(r=>{
@@ -322,7 +329,7 @@
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
                 createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
             },100);
-            window.addEventListener('resize', ()=>{ matchModalActionHeight(); setTimeout(()=>{
+            window.addEventListener('resize', ()=>{ matchModalActionHeight(); matchMainBarsHeight(); setTimeout(()=>{
                 createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
                 createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
