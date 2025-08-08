@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIGHTING INTERVAL TIMER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+        :root { --accent: #ff4444; --accent-glow: rgba(255, 68, 68, 0.4); }
+        :root { --action-bar-height: 48px; }
+        body { font-family: 'JetBrains Mono', monospace; background-color: #1A1A1A; color: white; }
+
+        /* Progress circle */
+        .timer-circle-container { position: relative; width: 100%; height: 100%; overflow: visible; }
+        .timer-circle-bg { width: 100%; height: 100%; border-radius: 50%; border: 1px solid #121212; box-sizing: border-box; position: relative; }
+        .timer-circle-bg::after { display: none; }
+        .progress-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .progress-ring__circle { fill: transparent; stroke-width: 3; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke 0.5s ease-in-out; }
+
+        /* Controls */
+        .button { transition: all 0.3s ease; outline: none !important; transform: none !important; height: 40px; line-height: 20px; box-sizing: border-box; }
+        .button:active { transform: none !important; box-shadow: inset 0 0 12px 3px var(--accent-glow) !important; }
+        .saber-glow { position: relative; transition: all 0.3s ease; transform: none !important; border: none !important; }
+        .saber-glow:hover { box-shadow: inset 0 0 10px 2px var(--accent-glow); transform: none !important; }
+        .saber-glow::after { content: ''; position: absolute; inset: 0; border: 1px solid transparent; background: transparent; box-shadow: inset 0 0 10px 2px var(--accent-glow); opacity: 0; transition: all 0.3s ease; pointer-events: none; z-index: 10; }
+        .saber-glow:hover::after { opacity: 1; border-color: var(--accent); }
+        .active-button { background-color: #484848 !important; box-shadow: inset 0 0 12px 3px var(--accent-glow) !important; transform: none !important; border: none !important; }
+
+        /* Slider UI (özet) */
+        .slider-container { position: relative; margin: 1.5rem 0; }
+        .slider-with-buttons { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; gap: 8px; }
+        .slider { -webkit-appearance: none; width: 100%; height: 4px; background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%)); outline: none; border-radius: 3px; cursor: pointer; grid-column: 2; --slider-track-height: 6px; --slider-value: 50%; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); position: relative; z-index: 2; }
+        .slider::-webkit-slider-thumb:hover { background: #ff4444; box-shadow: 0 0 10px 2px rgba(255,68,68,.7); transform: scale(1.1); }
+        .slider::-moz-range-thumb { width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); border: none; z-index: 2; }
+        .slider::-moz-range-thumb:hover { background: #ff4444; box-shadow: 0 0 10px 2px rgba(255,68,68,.7); transform: scale(1.1); }
+
+        .slider-btn { width: 28px; height: 28px; border-radius: 50%; background-color: #404040; color: white; border: none; font-size: 1.2rem; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; padding: 0; z-index: 10; box-shadow: 0 0 4px rgba(0,0,0,.4); }
+        .slider-btn:hover { background-color: #555; box-shadow: 0 0 6px var(--accent-glow); }
+        .slider-btn:active { transform: scale(.95); background-color: #333; }
+
+        /* Presets */
+        .presets-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; width: 100%; justify-content: center; }
+        .preset-btn { background-color: #333; color: #888; border: none; padding: 4px 8px; border-radius: 4px; font-size: .7rem; cursor: pointer; transition: all .2s; min-width: 36px; text-align: center; }
+        .preset-btn:hover { background-color: #444; color: #ccc; }
+        .preset-btn.active { background-color: rgba(255,68,68,.2); color: #ff4444; }
+
+        .bg-custom { background-color: #1A1A1A; }
+
+        /* Scrollbar gizle ama kaydırmayı koru */
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
+        .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+        .modal-actions { height: var(--action-bar-height); }
+        .modal-scroll { padding-bottom: calc(var(--action-bar-height) + env(safe-area-inset-bottom)); }
+    </style>
+</head>
+<body class="font-jetbrains bg-custom">
+    <!-- Header & Timer -->
+    <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
+        <div class="bg-custom p-0 w-full flex flex-col min-h-screen pb-24">
+            <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+            <div class="flex items-center justify-center flex-grow">
+                <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
+                    <div class="timer-circle-container">
+                        <div id="timer-circle-bg" class="timer-circle-bg"></div>
+                        <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 384 384" style="overflow: visible;">
+                            <defs>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="4" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
+                            </defs>
+                            <circle class="progress-ring__circle" id="progress-ring-circle" stroke-width="3" fill="transparent" r="190" cx="192" cy="192" stroke-dasharray="1193.8" stroke-dashoffset="0" filter="url(#glow)" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center space-y-1 md:space-y-2">
+                    <span id="timer-status" class="text-xl md:text-2xl font-normal uppercase">GET READY</span>
+                    <span id="timer" class="text-6xl md:text-7xl lg:text-8xl font-bold">03:00</span>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs md:text-sm uppercase">ROUND</span>
+                        <span id="round-info" class="text-xl md:text-2xl font-normal mt-1">01/03</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Bottom Bar (Main) -->
+    <div class="fixed bottom-0 left-0 right-0 z-10 bg-custom" style="padding-bottom: env(safe-area-inset-bottom);"> <!-- Outer fixed bar -->
+        <div class="max-w-xl mx-auto"> <!-- Inner centering container -->
+            <div class="flex flex-col w-full"> <!-- Original button_rows_container, mt-auto removed -->
+                <!-- First Row -->
+                <div class="flex flex-row w-full">
+                    <button id="start" class="flex-1 px-3 py-2 bg-[#404040] text-white font-normal hover-stroke saber-glow button transition-all uppercase">START</button>
+                    <button id="reset" class="flex-1 px-3 py-2 bg-[#333333] text-white font-normal hover-stroke saber-glow button transition-all uppercase">RESET</button>
+                </div>
+                <!-- Second Row -->
+                <button id="settingsBtn" class="w-full px-3 py-2 bg-[#262626] text-white font-normal hover-stroke saber-glow button transition-all uppercase">SETTINGS</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="prepTick" src="clock-clock-sound-clock-clock-time-10343.mp3" preload="auto"></audio>
+
+    <!-- SETTINGS OVERLAY: Pixel-perfect, full-screen, same width as main, bottom bar aligned -->
+    <div id="settingsModal" class="fixed inset-0 hidden z-50 bg-custom overflow-hidden">
+        <div class="max-w-xl mx-auto min-h-screen flex flex-col">
+            <!-- Header -->
+            <div id="settingsHeader" class="flex justify-center items-center p-6 pb-4">
+                <h2 class="text-xl font-bold uppercase">SETTINGS</h2>
+            </div>
+            <!-- Scrollable content -->
+            <div id="modalScroll" class="flex-1 overflow-y-auto no-scrollbar modal-scroll px-6">
+                <div class="space-y-6 pb-4">
+                    <!-- ROUND DURATION -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">ROUND DURATION</label>
+                            <span id="roundDurationValue" class="text-right ml-2">03:00</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="roundMinus">-</button>
+                                <input type="range" id="roundDuration" class="slider" min="5" max="360" step="5" value="180" />
+                                <button class="slider-btn plus" id="roundPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="roundPresets"></div>
+                        </div>
+                    </div>
+                    <!-- REST DURATION -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">REST DURATION</label>
+                            <span id="restDurationValue" class="text-right ml-2">01:00</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="restMinus">-</button>
+                                <input type="range" id="restDuration" class="slider" min="5" max="120" step="5" value="60" />
+                                <button class="slider-btn plus" id="restPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="restPresets"></div>
+                        </div>
+                    </div>
+                    <!-- PREP DURATION -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">PREP DURATION</label>
+                            <span id="prepDurationValue" class="text-right ml-2">5s</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="prepMinus">-</button>
+                                <input type="range" id="prepDuration" class="slider" min="3" max="30" step="1" value="5" />
+                                <button class="slider-btn plus" id="prepPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="prepPresets"></div>
+                        </div>
+                    </div>
+                    <!-- TOTAL ROUNDS -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium uppercase">TOTAL ROUNDS</label>
+                            <span id="totalRoundsValue" class="text-right ml-2">03</span>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-with-buttons">
+                                <button class="slider-btn minus" id="roundsMinus">-</button>
+                                <input type="range" id="totalRounds" class="slider" min="1" max="30" step="1" value="3" />
+                                <button class="slider-btn plus" id="roundsPlus">+</button>
+                            </div>
+                            <div class="presets-container" id="roundsPresets"></div>
+                        </div>
+                    </div>
+
+                    <!-- SOUND SETTINGS -->
+                    <details class="pt-4 border-t border-gray-600 mt-6">
+                        <summary class="text-md font-medium uppercase text-gray-300 cursor-pointer hover:text-white mb-3 focus:outline-none">SOUND SETTINGS</summary>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-medium uppercase">Master Mute</label>
+                                <label for="muteToggle" class="relative inline-flex items-center cursor-pointer gap-3">
+                                    <input type="checkbox" id="muteToggle" class="sr-only peer" />
+                                    <svg id="volume-on-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-300"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/><path d="M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/></svg>
+                                    <svg id="volume-off-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-300 hidden"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z"/></svg>
+                                    <div class="relative w-11 h-6 bg-gray-500 rounded-full peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all outline-none ring-0"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex justify-between items-center"><label class="text-sm font-medium uppercase">Master Volume</label><span id="masterVolumeValue" class="text-right ml-2">100%</span></div>
+                            <div class="slider-container"><div class="slider-with-buttons"><button class="slider-btn minus" id="masterVolumeMinus">-</button><input type="range" id="masterVolume" class="slider" min="0" max="100" step="1" value="100" /><button class="slider-btn plus" id="masterVolumePlus">+</button></div></div>
+
+                            <!-- Boost devre dışı bırakıldı -->
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+        <!-- Bottom bar inside overlay: pixel-perfect alignment with main bottom bar -->
+        <div id="modalActionBar" class="modal-actions fixed bottom-0 left-0 right-0 z-[60] bg-custom" style="pointer-events:auto;">
+            <div class="max-w-xl mx-auto h-full" style="padding-bottom: env(safe-area-inset-bottom);">
+                <div class="flex flex-row w-full h-full">
+                    <button id="cancelSettings" class="flex-1 px-4 bg-[#262626] text-white/80 hover:text-white transition-all hover-stroke saber-glow button uppercase flex items-center justify-center">CANCEL</button>
+                    <button id="saveSettings" class="flex-1 px-4 bg-[#333333] text-white font-normal hover-stroke saber-glow button uppercase flex items-center justify-center">SAVE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio assets -->
+    <audio id="oneBell" src="SOUNDFX/ONEBELL.mp3" preload="auto" playsinline></audio>
+    <audio id="doubleBell" src="SOUNDFX/DOUBLEBELL.mp3" preload="auto" playsinline></audio>
+    <audio id="tripleBell" src="SOUNDFX/TRIPPLEBELL.mp3" preload="auto" playsinline></audio>
+    <audio id="last15sRing" src="SOUNDFX/RINGO.mp3" preload="auto" playsinline></audio>
+
+    <script>
+        let timer; let timeLeft; let isRunning=false; let currentRound=1; let isWork=false; let isPreparation=true;
+        let roundDuration=180, restDuration=60, prepDuration=5, totalRounds=3;
+        let masterVolume=1, isMuted=false; // 0..1
+        let volumeBoost=1; // 1..2 (100%-200%)
+        let audioCtx=null, masterGainNode=null, boostGainNode=null, useWebAudio=false;
+        const IS_FILE_PROTOCOL = location.protocol === 'file:';
+        const PROGRESS_COLOR_WORK='#ff4444', PROGRESS_COLOR_REST='#4466ff', PROGRESS_COLOR_PREP='#ffffff';
+        let totalDurationMs=0, timeLeftMs=0, lastUpdateTime=0;
+        let last15sWarningPlayed=false;
+        let audioPrimed=false;
+        let isFirstWork=true;
+
+        timeLeft = roundDuration;
+        const timerElement=document.getElementById('timer');
+        const statusElement=document.getElementById('timer-status');
+        const roundElement=document.getElementById('round-info');
+        const notificationSoundElement=document.getElementById('notificationSound');
+        const prepTickAudio=document.getElementById('prepTick');
+        const oneBellAudio=document.getElementById('oneBell');
+        const doubleBellAudio=document.getElementById('doubleBell');
+        const tripleBellAudio=document.getElementById('tripleBell');
+        const last15sAudio=document.getElementById('last15sRing');
+        const muteToggle=document.getElementById('muteToggle');
+        const volumeOnIcon=document.getElementById('volume-on-icon');
+        const volumeOffIcon=document.getElementById('volume-off-icon');
+
+        const circle=document.getElementById('progress-ring-circle');
+        const radius=190; const circumference=2*Math.PI*radius;
+        circle.style.strokeDasharray=circumference; circle.style.strokeDashoffset=0;
+
+        function updateDisplay(instant=false){
+            const minutes=Math.floor(timeLeft/60); const seconds=timeLeft%60;
+            timerElement.textContent=`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+            roundElement.textContent=` ${currentRound.toString().padStart(2,'0')} / ${totalRounds.toString().padStart(2,'0')}`;
+            updateRingColorAndEffects(instant);
+        }
+        function setAccentVars(color, glow){ document.documentElement.style.setProperty('--accent', color); document.documentElement.style.setProperty('--accent-glow', glow); }
+        function updateRingColorAndEffects(instant=false){ if(!circle) return; const originalTransition=circle.style.transition; if(instant){circle.style.transition='none';} else {circle.style.transition='stroke 0.5s ease-in-out';}
+            if(isPreparation){ circle.style.stroke=PROGRESS_COLOR_PREP; setAccentVars('#ff4444','rgba(255,68,68,0.4)'); }
+            else if(isWork){ circle.style.stroke=PROGRESS_COLOR_WORK; setAccentVars('#ff4444','rgba(255,68,68,0.4)'); }
+            else { circle.style.stroke=PROGRESS_COLOR_REST; setAccentVars('#4466ff','rgba(68,102,255,0.4)'); }
+            if(instant){ requestAnimationFrame(()=>{circle.style.transition=originalTransition||'stroke 0.5s ease-in-out';}); }
+        }
+
+        let animationId=null, glowFilter=null;
+        function startProgressAnimation(){ totalDurationMs = isPreparation ? prepDuration*1000 : (isWork ? roundDuration*1000 : restDuration*1000); timeLeftMs=timeLeft*1000; lastUpdateTime=performance.now(); if(animationId){cancelAnimationFrame(animationId);} glowFilter=document.querySelector('#glow feGaussianBlur'); function animate(timestamp){ if(!isRunning) return; const elapsed=timestamp-lastUpdateTime; lastUpdateTime=timestamp; timeLeftMs=Math.max(0,timeLeftMs-elapsed); const percent=(timeLeftMs/totalDurationMs)*100; const newTimeLeft=Math.ceil(timeLeftMs/1000); if(newTimeLeft!==timeLeft){ timeLeft=newTimeLeft; updateDisplay(); }
+                // Dinamik son uyarı eşiği
+                let warnSec = 0;
+                if (roundDuration >= 30) warnSec = 15; else if (roundDuration >= 20) warnSec = 10; else warnSec = 0;
+                if(warnSec>0 && isWork && !isPreparation && !last15sWarningPlayed && timeLeftMs<=warnSec*1000){ playLast15SecondsAlert(); last15sWarningPlayed=true; }
+                const offset=circumference*(1-percent/100); circle.style.strokeDashoffset=offset; let baseGlow=4, glowAmplitude=0, oscillationSpeed=0.005; if(isWork && !isPreparation){ if(timeLeftMs<=15000){ baseGlow=10; glowAmplitude=5; oscillationSpeed=0.008; } else if(timeLeftMs<=30000){ baseGlow=6; glowAmplitude=3; } } let currentGlowValue=baseGlow; if(glowAmplitude>0){ currentGlowValue=baseGlow+((Math.sin(timestamp*oscillationSpeed)+1)/2)*glowAmplitude; } if(glowFilter){ glowFilter.setAttribute('stdDeviation', currentGlowValue.toFixed(1)); } animationId=requestAnimationFrame(animate);} animationId=requestAnimationFrame(animate); }
+        function stopProgressAnimation(){ if(animationId){ cancelAnimationFrame(animationId); animationId=null; } }
+        function resetProgress(){ circle.style.strokeDashoffset=0; }
+
+        function updateDisplayValue(sliderId, displayId){ const slider=document.getElementById(sliderId); const display=document.getElementById(displayId); if(sliderId==='roundDuration'){ const minutes=Math.floor(roundDuration/60); const seconds=roundDuration%60; display.textContent=`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`; } else if(sliderId==='restDuration'){ const minutes=Math.floor(restDuration/60); const seconds=restDuration%60; display.textContent=`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`; } else if(sliderId==='prepDuration'){ display.textContent=`${slider.value}s`; } else { display.textContent=slider.value.toString().padStart(2,'0'); } }
+
+        function showSettings(){ document.getElementById('settingsModal').classList.toggle('hidden'); updateDisplayValue('roundDuration','roundDurationValue'); updateDisplayValue('restDuration','restDurationValue'); updateDisplayValue('prepDuration','prepDurationValue'); updateDisplayValue('totalRounds','totalRoundsValue'); }
+        function toggleTimer(){ if(!isRunning){ startTimer(); } else { stopTimer(); } }
+        function primeAudio(){ if(audioPrimed) return; if(useWebAudio){ ensureAudioGraph(); try{ if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); } }catch{} } [oneBellAudio,doubleBellAudio,tripleBellAudio,last15sAudio,prepTickAudio].forEach(a=>{ if(a){ try{ const p=a.play(); if(p && p.then){ p.then(()=>a.pause()).catch(()=>{}); } }catch(e){} } }); audioPrimed=true; }
+        function startTimer(){ isRunning=true; primeAudio(); document.getElementById('start').textContent='PAUSE'; document.getElementById('start').classList.add('active-button'); if(isPreparation){ timeLeft=prepDuration; if(prepTickAudio){ try{ prepTickAudio.loop=true; prepTickAudio.currentTime=0; prepTickAudio.play().catch(()=>{}); }catch{} } } updateDisplay(); startProgressAnimation(); timer=setInterval(countdown,1000); }
+        function countdown(){ if(timeLeft<=0){ clearInterval(timer); stopProgressAnimation(); isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); if(isPreparation){ stopPrepTick(); isPreparation=false; isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); if(isFirstWork){ playTripleBell(); isFirstWork=false; } else { playDoubleBell(); } startTimer(); } else if(isWork){ stopLast15(); // WORK -> REST : single bell
+                playSingleBell(); if(currentRound<totalRounds){ currentRound++; isWork=false; last15sWarningPlayed=false; timeLeft=restDuration; statusElement.textContent='REST'; updateDisplay(); startTimer(); } else { statusElement.textContent='FINISHED'; resetProgress(); playTripleBell(); } } else { // REST -> WORK : double bell
+                isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); playDoubleBell(); startTimer(); } } }
+        function stopTimer(){ isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); clearInterval(timer); stopProgressAnimation(); stopLast15(); stopPrepTick(); if(glowFilter){ glowFilter.setAttribute('stdDeviation','4'); } }
+        function resetTimer(){ stopTimer(); isRunning=false; currentRound=1; isWork=false; isPreparation=true; isFirstWork=true; timeLeft=roundDuration; document.getElementById('start').textContent='START'; statusElement.textContent='GET READY'; resetProgress(); updateDisplay(); }
+
+        function matchModalActionHeight(){
+            const ref = document.getElementById('settingsBtn');
+            const modal = document.getElementById('modalActionBar');
+            const scrollArea = document.getElementById('modalScroll');
+            const header = document.getElementById('settingsHeader');
+            if (!ref || !modal || !scrollArea) return;
+            const h = Math.max(40, Math.round(ref.getBoundingClientRect().height));
+            document.documentElement.style.setProperty('--action-bar-height', h + 'px');
+            const hh = header ? Math.round(header.getBoundingClientRect().height) : 56;
+            const maxH = `calc(100vh - ${h}px - ${hh}px - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
+            scrollArea.style.maxHeight = maxH;
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            resetProgress(); updateDisplay();
+            matchModalActionHeight();
+            setupSliders(); setupSoundControls(); setupExtraButtons();
+            // Scroll fallback (wheel + touch) for modal content
+            const scrollArea = document.getElementById('modalScroll');
+            if (scrollArea){
+                scrollArea.addEventListener('wheel', (e)=>{ scrollArea.scrollTop += e.deltaY; e.preventDefault(); }, { passive:false });
+                let tsY = 0;
+                scrollArea.addEventListener('touchstart', (e)=>{ if(e.touches && e.touches[0]) tsY = e.touches[0].clientY; }, { passive:true });
+                scrollArea.addEventListener('touchmove', (e)=>{ if(e.touches && e.touches[0]){ const dy = tsY - e.touches[0].clientY; scrollArea.scrollTop += dy; tsY = e.touches[0].clientY; e.preventDefault(); } }, { passive:false });
+            }
+            setTimeout(()=>{
+                createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
+                createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
+                createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
+                createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
+            },100);
+            window.addEventListener('resize', ()=>{ matchModalActionHeight(); setTimeout(()=>{
+                createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
+                createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
+                createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
+                createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
+            },100); });
+        });
+
+        document.getElementById('start').addEventListener('click', toggleTimer);
+        document.getElementById('reset').addEventListener('click', resetTimer);
+        document.getElementById('settingsBtn').addEventListener('click', showSettings);
+        document.getElementById('roundDuration').addEventListener('input', ()=>updateDisplayValue('roundDuration','roundDurationValue'));
+        document.getElementById('restDuration').addEventListener('input', ()=>updateDisplayValue('restDuration','restDurationValue'));
+        document.getElementById('prepDuration').addEventListener('input', ()=>updateDisplayValue('prepDuration','prepDurationValue'));
+        document.getElementById('totalRounds').addEventListener('input', ()=>updateDisplayValue('totalRounds','totalRoundsValue'));
+
+        document.getElementById('saveSettings').addEventListener('click', function(){ prepDuration=parseInt(document.getElementById('prepDuration').value); totalRounds=parseInt(document.getElementById('totalRounds').value); resetTimer(); document.getElementById('settingsModal').classList.add('hidden'); });
+        document.getElementById('cancelSettings').addEventListener('click', function(){ document.getElementById('settingsModal').classList.add('hidden'); });
+
+        function setupSliders(){ const snapValues=[60,120,180,240,300]; const restSnapValues=[30,45,60,90]; const prepSnapValues=[5,10,15,30]; const roundsSnapValues=[3,5,8,10,12,15,20,30]; const snapThreshold=10, prepSnapThreshold=1, roundsSnapThreshold=2; setupRoundDurationSlider(snapValues,snapThreshold); setupRestDurationSlider(restSnapValues,snapThreshold); setupPrepDurationSlider(prepSnapValues,prepSnapThreshold); setupTotalRoundsSlider(roundsSnapValues,roundsSnapThreshold); roundDuration=parseInt(document.getElementById('roundDuration').value); restDuration=parseInt(document.getElementById('restDuration').value); prepDuration=parseInt(document.getElementById('prepDuration').value); totalRounds=parseInt(document.getElementById('totalRounds').value); updateDisplayValue('roundDuration','roundDurationValue'); updateDisplayValue('restDuration','restDurationValue'); updateDisplayValue('prepDuration','prepDurationValue'); updateDisplayValue('totalRounds','totalRoundsValue'); }
+
+        function setupRoundDurationSlider(){ const slider=document.getElementById('roundDuration'); const minus=document.getElementById('roundMinus'); const plus=document.getElementById('roundPlus'); updateSliderFill(slider,5,360); slider.addEventListener('input',function(){ roundDuration=parseInt(this.value); updateDisplayValue('roundDuration','roundDurationValue'); updateSliderFill(this,5,360); updateActivePreset('roundPresets',roundDuration); }); minus.addEventListener('click',function(){ if(roundDuration>5){ roundDuration=Math.max(5,roundDuration-5); slider.value=roundDuration; updateDisplayValue('roundDuration','roundDurationValue'); updateActivePreset('roundPresets',roundDuration);} }); plus.addEventListener('click',function(){ if(roundDuration<360){ roundDuration=Math.min(360,roundDuration+5); slider.value=roundDuration; updateDisplayValue('roundDuration','roundDurationValue'); updateActivePreset('roundPresets',roundDuration);} }); }
+        function setupRestDurationSlider(){ const slider=document.getElementById('restDuration'); const minus=document.getElementById('restMinus'); const plus=document.getElementById('restPlus'); updateSliderFill(slider,5,120); slider.addEventListener('input',function(){ restDuration=parseInt(this.value); updateDisplayValue('restDuration','restDurationValue'); updateSliderFill(this,5,120); updateActivePreset('restPresets',restDuration); }); minus.addEventListener('click',function(){ if(restDuration>5){ restDuration=Math.max(5,restDuration-5); slider.value=restDuration; updateDisplayValue('restDuration','restDurationValue'); updateActivePreset('restPresets',restDuration);} }); plus.addEventListener('click',function(){ if(restDuration<120){ restDuration=Math.min(120,restDuration+5); slider.value=restDuration; updateDisplayValue('restDuration','restDurationValue'); updateActivePreset('restPresets',restDuration);} }); }
+        function setupPrepDurationSlider(){ const slider=document.getElementById('prepDuration'); const minus=document.getElementById('prepMinus'); const plus=document.getElementById('prepPlus'); updateSliderFill(slider,3,30); slider.addEventListener('input',function(){ prepDuration=parseInt(this.value); updateDisplayValue('prepDuration','prepDurationValue'); updateSliderFill(this,3,30); updateActivePreset('prepPresets',prepDuration); }); minus.addEventListener('click',function(){ if(prepDuration>3){ prepDuration=Math.max(3,prepDuration-1); slider.value=prepDuration; updateDisplayValue('prepDuration','prepDurationValue'); updateActivePreset('prepPresets',prepDuration);} }); plus.addEventListener('click',function(){ if(prepDuration<30){ prepDuration=Math.min(30,prepDuration+1); slider.value=prepDuration; updateDisplayValue('prepDuration','prepDurationValue'); updateActivePreset('prepPresets',prepDuration);} }); }
+        function setupTotalRoundsSlider(){ const slider=document.getElementById('totalRounds'); const minus=document.getElementById('roundsMinus'); const plus=document.getElementById('roundsPlus'); updateSliderFill(slider,1,30); slider.addEventListener('input',function(){ totalRounds=parseInt(this.value); updateDisplayValue('totalRounds','totalRoundsValue'); updateSliderFill(this,1,30); updateActivePreset('roundsPresets',totalRounds); }); minus.addEventListener('click',function(){ if(totalRounds>1){ totalRounds=Math.max(1,totalRounds-1); slider.value=totalRounds; updateDisplayValue('totalRounds','totalRoundsValue'); updateSliderFill(slider,1,30); updateActivePreset('roundsPresets',totalRounds); } }); plus.addEventListener('click',function(){ if(totalRounds<30){ totalRounds=Math.min(30,totalRounds+1); slider.value=totalRounds; updateDisplayValue('totalRounds','totalRoundsValue'); updateSliderFill(slider,1,30); updateActivePreset('roundsPresets',totalRounds); } }); }
+        function updateSliderFill(slider,min,max){ const value=parseInt(slider.value); const percent=((value-min)/(max-min))*100; slider.style.setProperty('--slider-value',`${percent}%`); }
+
+        function setupSoundControls(){ const masterVolumeSlider=document.getElementById('masterVolume'); const masterVolumeValueDisplay=document.getElementById('masterVolumeValue'); const masterVolumeMinusBtn=document.getElementById('masterVolumeMinus'); const masterVolumePlusBtn=document.getElementById('masterVolumePlus'); const boostSlider=document.getElementById('boostVolume'); const boostValueDisplay=document.getElementById('boostVolumeValue'); const boostMinusBtn=document.getElementById('boostVolumeMinus'); const boostPlusBtn=document.getElementById('boostVolumePlus'); if(!masterVolumeSlider) return; masterVolumeSlider.addEventListener('input',function(){ masterVolume=parseInt(this.value)/100; updateVolumeDisplay(masterVolumeValueDisplay,this.value); applyMasterVolume(); updateMuteToggleState(); updateSliderFill(this,parseInt(this.min),parseInt(this.max)); }); masterVolumeMinusBtn.addEventListener('click',function(){ let v=parseInt(masterVolumeSlider.value); let nv=Math.max(0,v-5); masterVolumeSlider.value=nv; masterVolume=nv/100; updateVolumeDisplay(masterVolumeValueDisplay,nv); applyMasterVolume(); updateMuteToggleState(); updateSliderFill(masterVolumeSlider,parseInt(masterVolumeSlider.min),parseInt(masterVolumeSlider.max)); }); masterVolumePlusBtn.addEventListener('click',function(){ let v=parseInt(masterVolumeSlider.value); let nv=Math.min(100,v+5); masterVolumeSlider.value=nv; masterVolume=nv/100; updateVolumeDisplay(masterVolumeValueDisplay,nv); applyMasterVolume(); updateMuteToggleState(); updateSliderFill(masterVolumeSlider,parseInt(masterVolumeSlider.min),parseInt(masterVolumeSlider.max)); });
+        if (boostSlider){
+            const setBoost = (val)=>{ volumeBoost = Math.max(1, Math.min(2, val/100)); useWebAudio = (!IS_FILE_PROTOCOL && volumeBoost>1.0); if(useWebAudio) ensureAudioGraph(); updateVolumeDisplay(boostValueDisplay, Math.round(volumeBoost*100)); applyMasterVolume(); updateSliderFill(boostSlider, parseInt(boostSlider.min), parseInt(boostSlider.max)); };
+            boostSlider.addEventListener('input', function(){ setBoost(parseInt(this.value)); });
+            boostMinusBtn.addEventListener('click', function(){ let v=parseInt(boostSlider.value); let nv=Math.max(100, v-5); boostSlider.value=nv; setBoost(nv); });
+            boostPlusBtn.addEventListener('click', function(){ let v=parseInt(boostSlider.value); let nv=Math.min(200, v+5); boostSlider.value=nv; setBoost(nv); });
+            setBoost(parseInt(boostSlider.value));
+        }
+        if(muteToggle){ muteToggle.addEventListener('change',function(){ isMuted=!this.checked; applyMasterVolume(); updateMuteToggleState(); }); } updateVolumeDisplay(masterVolumeValueDisplay, masterVolumeSlider.value); applyMasterVolume(); updateMuteToggleState(); if(masterVolumeSlider) updateSliderFill(masterVolumeSlider, parseInt(masterVolumeSlider.min), parseInt(masterVolumeSlider.max)); if(boostSlider) updateSliderFill(boostSlider, parseInt(boostSlider.min), parseInt(boostSlider.max)); }
+        function applyMasterVolume(){ if(useWebAudio){ ensureAudioGraph(); } const m = isMuted ? 0 : Math.max(0,Math.min(1, masterVolume)); const b = Math.max(1, Math.min(2, volumeBoost));
+            if(useWebAudio){ if(masterGainNode) masterGainNode.gain.value = m; if(boostGainNode) boostGainNode.gain.value = b; [oneBellAudio,doubleBellAudio,tripleBellAudio,last15sAudio,prepTickAudio].forEach(el=>{ if(el){ el.volume = 1; el.muted = false; } }); }
+            else { // fallback: element volume ile uygula (boost 100% ile sınırlı)
+                const vol = m; [oneBellAudio,doubleBellAudio,tripleBellAudio,last15sAudio,prepTickAudio].forEach(el=>{ if(el){ el.muted = isMuted; el.volume = vol; } }); }
+        }
+        function updateVolumeDisplay(el, val){ if(el) el.textContent=`${val}%`; }
+        function updateMuteToggleState(){ if (!muteToggle) return; const effectivelyMuted = isMuted || masterVolume === 0; // toggle checked = SOUND ON
+            muteToggle.checked = !effectivelyMuted; if (volumeOnIcon && volumeOffIcon) { if (effectivelyMuted) { volumeOffIcon.classList.remove('hidden'); volumeOnIcon.classList.add('hidden'); } else { volumeOnIcon.classList.remove('hidden'); volumeOffIcon.classList.add('hidden'); } } }
+        function playNotificationSound(){ if(!notificationSoundElement) return; applyMasterVolume(); notificationSoundElement.play().catch(()=>{}); }
+        // Bell helpers: play full files from SOUNDFX
+        function safePlay(a){ if(!a) return; try{ if(useWebAudio){ ensureAudioGraph(); if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); } } }catch{} applyMasterVolume(); try{ a.muted = false; a.currentTime=0; const p=a.play(); if(p && typeof p.catch==='function'){ p.catch(()=>{ try{ // fallback direkt çal
+                        a.muted=false; a.play(); }catch{} }); } }catch{} }
+        function playSingleBell(){ safePlay(oneBellAudio); }
+        function playDoubleBell(){ safePlay(doubleBellAudio); }
+        function playTripleBell(){ safePlay(tripleBellAudio); }
+        function playLast15SecondsAlert(){ if(!last15sAudio) return; applyMasterVolume(); try{ last15sAudio.currentTime=0; }catch{} last15sAudio.play().catch(()=>{}); }
+        function stopLast15(){ if(last15sAudio){ try{ last15sAudio.pause(); last15sAudio.currentTime=0; }catch{} } }
+        function stopPrepTick(){ if(prepTickAudio){ try{ prepTickAudio.pause(); prepTickAudio.currentTime=0; }catch{} } }
+        function ensureAudioGraph(){
+            if(!useWebAudio) return; // WebAudio devre dışıysa hiç kurma (CORS sıfırları önlemek için)
+            try{
+                if(!audioCtx){
+                    const Ctx = (window.AudioContext||window.webkitAudioContext);
+                    if(!Ctx) { useWebAudio=false; return; }
+                    audioCtx = new Ctx();
+                    masterGainNode = audioCtx.createGain();
+                    boostGainNode = audioCtx.createGain();
+                    boostGainNode.connect(masterGainNode);
+                    masterGainNode.connect(audioCtx.destination);
+                    [oneBellAudio,doubleBellAudio,tripleBellAudio,last15sAudio,prepTickAudio].forEach(el=>{
+                        if(el && !el.__connected){
+                            try{ const src = audioCtx.createMediaElementSource(el); src.connect(boostGainNode); el.__connected=true; }catch(e){}
+                        }
+                        if(el){ el.volume = 1; el.muted = false; }
+                    });
+                    useWebAudio=true;
+                    applyMasterVolume();
+                }
+            }catch(e){ useWebAudio=false; }
+        }
+        // Kullanıcı etkileşiminde ses motorunu aç
+        (function attachAudioResumeOnce(){
+            const resume = ()=>{ try{ if(useWebAudio){ ensureAudioGraph(); if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); } } }catch{} finally { document.removeEventListener('click',resume); document.removeEventListener('touchstart',resume); } };
+            document.addEventListener('click', resume, { once:true, passive:true });
+            document.addEventListener('touchstart', resume, { once:true, passive:true });
+        })();
+        // Güvenlik: updateActivePreset/parseBtnValue tanımlı değilse tanımla
+        if (typeof window.updateActivePreset !== 'function') {
+            window.updateActivePreset = function(containerId, value) {
+                const container = document.getElementById(containerId);
+                if (!container) return false;
+                const buttons = container.querySelectorAll('.preset-btn');
+                let exact = false;
+                buttons.forEach(btn => {
+                    const v = window.parseBtnValue ? window.parseBtnValue(btn.textContent) : parseInt(btn.textContent) || 0;
+                    if (v === value) { btn.classList.add('active'); exact = true; }
+                    else { btn.classList.remove('active'); }
+                });
+                return exact;
+            };
+        }
+        if (typeof window.parseBtnValue !== 'function') {
+            window.parseBtnValue = function(text){
+                if (text.endsWith('s')) return parseInt(text.replace('s',''));
+                if (text.endsWith('m')) return parseInt(text.replace('m',''))*60;
+                return parseInt(text);
+            };
+        }
+
+        // Preset butonlarını oluşturma
+        function createPresets(containerId, presetValues, currentValue, sliderId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            presetValues.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-btn';
+                if (value === currentValue) btn.classList.add('active');
+
+                let label = '';
+                if (containerId === 'roundsPresets') {
+                    label = `${value}`;
+                } else if (containerId === 'prepPresets') {
+                    label = `${value}s`;
+                } else if (containerId === 'restPresets') {
+                    label = `${value}s`;
+                } else { // round durations
+                    label = value < 60 ? `${value}s` : `${Math.floor(value/60)}m`;
+                }
+                btn.textContent = label;
+
+                btn.addEventListener('click', function() {
+                    const slider = document.getElementById(sliderId);
+                    if (!slider) return;
+                    slider.value = value;
+                    const min = parseInt(slider.min), max = parseInt(slider.max);
+
+                    if (sliderId === 'roundDuration') {
+                        roundDuration = value;
+                    } else if (sliderId === 'restDuration') {
+                        restDuration = value;
+                    } else if (sliderId === 'prepDuration') {
+                        prepDuration = value;
+                    } else if (sliderId === 'totalRounds') {
+                        totalRounds = value;
+                    }
+
+                    updateSliderFill(slider, min, max);
+                    const ev = new Event('input', { bubbles: true });
+                    slider.dispatchEvent(ev);
+                    updateDisplayValue(slider.id, slider.id + 'Value');
+
+                    container.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
+        // Legacy no-op to avoid ReferenceError if called
+        function setupExtraButtons(){ /* handled inside slider setup functions */ }
+    </script>
+</body>
+</html>
