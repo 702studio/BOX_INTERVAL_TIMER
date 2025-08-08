@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <style>
         :root { --accent: #ff4444; --accent-glow: rgba(255, 68, 68, 0.4); }
+        :root { --main-bars-height: 112px; }
         :root { --action-bar-height: 48px; }
         body { font-family: 'JetBrains Mono', monospace; background-color: #1A1A1A; color: white; }
 
@@ -31,6 +32,7 @@
         .slider-container { position: relative; margin: 1.5rem 0; }
         .slider-with-buttons { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; gap: 8px; }
         .slider { -webkit-appearance: none; width: 100%; height: 4px; background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%)); outline: none; border-radius: 3px; cursor: pointer; grid-column: 2; --slider-track-height: 6px; --slider-value: 50%; }
+        .slider { touch-action: pan-x; }
         .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); position: relative; z-index: 2; }
         .slider::-webkit-slider-thumb:hover { background: #ff4444; box-shadow: 0 0 10px 2px rgba(255,68,68,.7); transform: scale(1.1); }
         .slider::-moz-range-thumb { width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); border: none; z-index: 2; }
@@ -59,9 +61,9 @@
 <body class="font-jetbrains bg-custom">
     <!-- Header & Timer -->
     <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
-        <div class="bg-custom p-0 w-full flex flex-col min-h-screen pb-24">
+        <div class="bg-custom p-0 w-full flex flex-col min-h-screen" style="padding-bottom: var(--main-bars-height);">
             <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
-            <div class="flex items-center justify-center flex-grow">
+            <div class="flex items-center justify-center flex-grow" style="min-height: calc(100svh - var(--main-bars-height));">
                 <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
                     <div class="timer-circle-container">
                         <div id="timer-circle-bg" class="timer-circle-bg"></div>
@@ -301,6 +303,11 @@
             resetProgress(); updateDisplay();
             matchModalActionHeight();
             setupSliders(); setupSoundControls(); setupExtraButtons();
+            // Slider dokunmatiklerinde dikey scroll'u engelle
+            document.querySelectorAll('input[type="range"]').forEach(r=>{
+                r.addEventListener('touchstart', (e)=>{ e.stopPropagation(); }, { passive:true });
+                r.addEventListener('touchmove', (e)=>{ e.stopPropagation(); e.preventDefault(); }, { passive:false });
+            });
             // Scroll fallback (wheel + touch) for modal content
             const scrollArea = document.getElementById('modalScroll');
             if (scrollArea){
