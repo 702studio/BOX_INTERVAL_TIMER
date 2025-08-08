@@ -3,6 +3,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FIGHTING INTERVAL TIMER</title>
+    <meta http-equiv="refresh" content="0; url=box_interval.html">
+    <script>
+      // Ek güvenlik: meta refresh engellenirse JS ile yönlendir
+      (function(){
+        try{
+          var isIndex = /(?:^|\/)index\.html?$/i.test(location.pathname) || /\/$/.test(location.pathname);
+          if(isIndex){
+            var base = location.pathname.replace(/index\.html?$/i,'');
+            var target = base + 'box_interval.html' + location.search + location.hash;
+            location.replace(target);
+          }
+        }catch(e){}
+      })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
