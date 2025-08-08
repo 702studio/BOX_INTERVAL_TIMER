@@ -62,8 +62,8 @@
     <!-- Header & Timer -->
     <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
         <div class="bg-custom p-0 w-full flex flex-col min-h-screen" style="padding-bottom: var(--main-bars-height);">
-            <h1 class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
-            <div class="flex items-center justify-center flex-grow" style="min-height: calc(100dvh - var(--main-bars-height));">
+            <h1 id="pageTitle" class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+            <div id="contentArea" class="flex items-center justify-center flex-grow">
                 <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
                     <div class="timer-circle-container">
                         <div id="timer-circle-bg" class="timer-circle-bg"></div>
@@ -77,7 +77,8 @@
                             <circle class="progress-ring__circle" id="progress-ring-circle" stroke-width="3" fill="transparent" r="190" cx="192" cy="192" stroke-dasharray="1193.8" stroke-dashoffset="0" filter="url(#glow)" />
                         </svg>
                     </div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center space-y-1 md:space-y-2">
+                    <!-- Center overlay via translate to guarantee perfect centering -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col items-center space-y-1 md:space-y-2">
                         <span id="timer-status" class="text-xl md:text-2xl font-normal uppercase">GET READY</span>
                         <span id="timer" class="text-6xl md:text-7xl lg:text-8xl font-bold">03:00</span>
                         <div class="flex flex-col items-center">
@@ -304,11 +305,30 @@
             const h = Math.max(56, Math.round(mainBars.getBoundingClientRect().height));
             document.documentElement.style.setProperty('--main-bars-height', h + 'px');
         }
+        function reflowCenter(){
+            const content = document.getElementById('contentArea');
+            const title = document.getElementById('pageTitle');
+            const mainBars = document.getElementById('mainBars');
+            if(!content) return;
+            const vh = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+            const titleBox = title ? title.getBoundingClientRect() : { height: 0 };
+            const cs = title ? getComputedStyle(title) : null;
+            const mt = cs ? parseFloat(cs.marginTop) : 0;
+            const mb = cs ? parseFloat(cs.marginBottom) : 0;
+            const headerH = titleBox.height + mt + mb;
+            const barsH = mainBars ? mainBars.getBoundingClientRect().height : 0;
+            const available = Math.max(0, Math.round(vh - headerH - barsH));
+            content.style.minHeight = available + 'px';
+            content.style.display = 'flex';
+            content.style.alignItems = 'center';
+            content.style.justifyContent = 'center';
+        }
 
         document.addEventListener('DOMContentLoaded', function(){
             resetProgress(); updateDisplay();
             matchModalActionHeight();
             matchMainBarsHeight();
+            reflowCenter();
             setupSliders(); setupSoundControls(); setupExtraButtons();
             // Slider dokunmatiklerinde dikey scroll'u engelle
             document.querySelectorAll('input[type="range"]').forEach(r=>{
@@ -329,12 +349,15 @@
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
                 createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
             },100);
-            window.addEventListener('resize', ()=>{ matchModalActionHeight(); matchMainBarsHeight(); setTimeout(()=>{
+            window.addEventListener('resize', ()=>{ matchModalActionHeight(); matchMainBarsHeight(); reflowCenter(); setTimeout(()=>{
                 createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
                 createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
                 createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
             },100); });
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', ()=>{ matchMainBarsHeight(); reflowCenter(); }, { passive:true });
+            }
         });
 
         document.getElementById('start').addEventListener('click', toggleTimer);
