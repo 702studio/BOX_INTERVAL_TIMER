@@ -293,10 +293,21 @@
 
         function updateDisplayValue(sliderId, displayId){ const slider=document.getElementById(sliderId); const display=document.getElementById(displayId); if(sliderId==='roundDuration'){ const minutes=Math.floor(roundDuration/60); const seconds=roundDuration%60; display.textContent=`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`; } else if(sliderId==='restDuration'){ const minutes=Math.floor(restDuration/60); const seconds=restDuration%60; display.textContent=`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`; } else if(sliderId==='prepDuration'){ display.textContent=`${slider.value}s`; } else { display.textContent=slider.value.toString().padStart(2,'0'); } }
 
-        function showSettings(){ document.getElementById('settingsModal').classList.toggle('hidden'); updateDisplayValue('roundDuration','roundDurationValue'); updateDisplayValue('restDuration','restDurationValue'); updateDisplayValue('prepDuration','prepDurationValue'); updateDisplayValue('totalRounds','totalRoundsValue'); }
+        function showSettings(){
+            const modal = document.getElementById('settingsModal');
+            const willOpen = modal.classList.contains('hidden');
+            if (willOpen && isRunning) { // Settings açılırken pause
+                stopTimer();
+            }
+            modal.classList.toggle('hidden');
+            updateDisplayValue('roundDuration','roundDurationValue');
+            updateDisplayValue('restDuration','restDurationValue');
+            updateDisplayValue('prepDuration','prepDurationValue');
+            updateDisplayValue('totalRounds','totalRoundsValue');
+        }
         function toggleTimer(){ if(!isRunning){ startTimer(); } else { stopTimer(); } }
         function primeAudio(){ if(audioPrimed) return; if(useWebAudio){ ensureAudioGraph(); try{ if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); } }catch{} } [oneBellAudio,doubleBellAudio,tripleBellAudio,last15sAudio,prepTickAudio].forEach(a=>{ if(a){ try{ const p=a.play(); if(p && p.then){ p.then(()=>a.pause()).catch(()=>{}); } }catch(e){} } }); audioPrimed=true; }
-        function startTimer(){ isRunning=true; primeAudio(); document.getElementById('start').textContent='PAUSE'; document.getElementById('start').classList.add('active-button'); if(isPreparation){ timeLeft=prepDuration; if(prepTickAudio){ try{ prepTickAudio.loop=true; prepTickAudio.currentTime=0; prepTickAudio.play().catch(()=>{}); }catch{} } } updateDisplay(); startProgressAnimation(); timer=setInterval(countdown,1000); }
+        function startTimer(){ isRunning=true; primeAudio(); document.getElementById('start').textContent='PAUSE'; document.getElementById('start').classList.add('active-button'); if(isPreparation){ timeLeft=prepDuration; if(prepTickAudio){ try{ prepTickAudio.loop=true; prepTickAudio.currentTime=0; safePlay(prepTickAudio); }catch{} } } updateDisplay(); startProgressAnimation(); timer=setInterval(countdown,1000); }
         function countdown(){ if(timeLeft<=0){ clearInterval(timer); stopProgressAnimation(); isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); if(isPreparation){ stopPrepTick(); isPreparation=false; isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); if(isFirstWork){ playTripleBell(); isFirstWork=false; } else { playDoubleBell(); } startTimer(); } else if(isWork){ stopLast15(); // WORK -> REST : single bell
                 playSingleBell(); if(currentRound<totalRounds){ currentRound++; isWork=false; last15sWarningPlayed=false; timeLeft=restDuration; statusElement.textContent='REST'; updateDisplay(); startTimer(); } else { statusElement.textContent='FINISHED'; resetProgress(); playTripleBell(); } } else { // REST -> WORK : double bell
                 isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); playDoubleBell(); startTimer(); } } }
@@ -367,13 +378,13 @@
             }
             setTimeout(()=>{
                 createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
-                createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
+                createPresets('restPresets',[10,20,30,45,60,90],restDuration,'restDuration');
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
                 createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
             },100);
             window.addEventListener('resize', ()=>{ matchModalActionHeight(); matchMainBarsHeight(); reflowCenter(); setTimeout(()=>{
                 createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
-                createPresets('restPresets',[30,45,60,90],restDuration,'restDuration');
+                createPresets('restPresets',[10,20,30,45,60,90],restDuration,'restDuration');
                 createPresets('prepPresets',[5,10,15,30],prepDuration,'prepDuration');
                 createPresets('roundsPresets',[3,5,8,10,12,15,20,30],totalRounds,'totalRounds');
             },100); });
@@ -393,7 +404,7 @@
         document.getElementById('saveSettings').addEventListener('click', function(){ prepDuration=parseInt(document.getElementById('prepDuration').value); totalRounds=parseInt(document.getElementById('totalRounds').value); resetTimer(); document.getElementById('settingsModal').classList.add('hidden'); });
         document.getElementById('cancelSettings').addEventListener('click', function(){ document.getElementById('settingsModal').classList.add('hidden'); });
 
-        function setupSliders(){ const snapValues=[60,120,180,240,300]; const restSnapValues=[30,45,60,90]; const prepSnapValues=[5,10,15,30]; const roundsSnapValues=[3,5,8,10,12,15,20,30]; const snapThreshold=10, prepSnapThreshold=1, roundsSnapThreshold=2; setupRoundDurationSlider(snapValues,snapThreshold); setupRestDurationSlider(restSnapValues,snapThreshold); setupPrepDurationSlider(prepSnapValues,prepSnapThreshold); setupTotalRoundsSlider(roundsSnapValues,roundsSnapThreshold); roundDuration=parseInt(document.getElementById('roundDuration').value); restDuration=parseInt(document.getElementById('restDuration').value); prepDuration=parseInt(document.getElementById('prepDuration').value); totalRounds=parseInt(document.getElementById('totalRounds').value); updateDisplayValue('roundDuration','roundDurationValue'); updateDisplayValue('restDuration','restDurationValue'); updateDisplayValue('prepDuration','prepDurationValue'); updateDisplayValue('totalRounds','totalRoundsValue'); }
+        function setupSliders(){ const snapValues=[60,120,180,240,300]; const restSnapValues=[10,20,30,45,60,90]; const prepSnapValues=[5,10,15,30]; const roundsSnapValues=[3,5,8,10,12,15,20,30]; const snapThreshold=10, prepSnapThreshold=1, roundsSnapThreshold=2; setupRoundDurationSlider(snapValues,snapThreshold); setupRestDurationSlider(restSnapValues,snapThreshold); setupPrepDurationSlider(prepSnapValues,prepSnapThreshold); setupTotalRoundsSlider(roundsSnapValues,roundsSnapThreshold); roundDuration=parseInt(document.getElementById('roundDuration').value); restDuration=parseInt(document.getElementById('restDuration').value); prepDuration=parseInt(document.getElementById('prepDuration').value); totalRounds=parseInt(document.getElementById('totalRounds').value); updateDisplayValue('roundDuration','roundDurationValue'); updateDisplayValue('restDuration','restDurationValue'); updateDisplayValue('prepDuration','prepDurationValue'); updateDisplayValue('totalRounds','totalRoundsValue'); }
 
         function setupRoundDurationSlider(){ const slider=document.getElementById('roundDuration'); const minus=document.getElementById('roundMinus'); const plus=document.getElementById('roundPlus'); updateSliderFill(slider,5,360); slider.addEventListener('input',function(){ roundDuration=parseInt(this.value); updateDisplayValue('roundDuration','roundDurationValue'); updateSliderFill(this,5,360); updateActivePreset('roundPresets',roundDuration); }); minus.addEventListener('click',function(){ if(roundDuration>5){ roundDuration=Math.max(5,roundDuration-5); slider.value=roundDuration; updateDisplayValue('roundDuration','roundDurationValue'); updateActivePreset('roundPresets',roundDuration);} }); plus.addEventListener('click',function(){ if(roundDuration<360){ roundDuration=Math.min(360,roundDuration+5); slider.value=roundDuration; updateDisplayValue('roundDuration','roundDurationValue'); updateActivePreset('roundPresets',roundDuration);} }); }
         function setupRestDurationSlider(){ const slider=document.getElementById('restDuration'); const minus=document.getElementById('restMinus'); const plus=document.getElementById('restPlus'); updateSliderFill(slider,5,120); slider.addEventListener('input',function(){ restDuration=parseInt(this.value); updateDisplayValue('restDuration','restDurationValue'); updateSliderFill(this,5,120); updateActivePreset('restPresets',restDuration); }); minus.addEventListener('click',function(){ if(restDuration>5){ restDuration=Math.max(5,restDuration-5); slider.value=restDuration; updateDisplayValue('restDuration','restDurationValue'); updateActivePreset('restPresets',restDuration);} }); plus.addEventListener('click',function(){ if(restDuration<120){ restDuration=Math.min(120,restDuration+5); slider.value=restDuration; updateDisplayValue('restDuration','restDurationValue'); updateActivePreset('restPresets',restDuration);} }); }
