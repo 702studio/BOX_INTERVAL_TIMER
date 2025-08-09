@@ -10,7 +10,7 @@
         :root { --accent: #ff4444; --accent-glow: rgba(255, 68, 68, 0.4); }
         :root { --main-bars-height: 112px; }
         :root { --action-bar-height: 48px; }
-        body { font-family: 'JetBrains Mono', monospace; background-color: #1A1A1A; color: white; }
+        body { font-family: 'JetBrains Mono', monospace; background-color: #1A1A1A; color: white; overflow: hidden; }
 
         /* Progress circle */
         .timer-circle-container { position: relative; width: 100%; height: 100%; overflow: visible; }
@@ -31,8 +31,7 @@
         /* Slider UI (özet) */
         .slider-container { position: relative; margin: 1.5rem 0; }
         .slider-with-buttons { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; gap: 8px; }
-        .slider { -webkit-appearance: none; width: 100%; height: 4px; background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%)); outline: none; border-radius: 3px; cursor: pointer; grid-column: 2; --slider-track-height: 6px; --slider-value: 50%; }
-        .slider { touch-action: pan-x; }
+        .slider { -webkit-appearance: none; width: 100%; height: 4px; background: linear-gradient(to right, #ff4444 0%, #ff4444 var(--slider-value, 0%), #333333 var(--slider-value, 0%)); outline: none; border-radius: 3px; cursor: pointer; grid-column: 2; --slider-track-height: 6px; --slider-value: 50%; touch-action: pan-x; overscroll-behavior: contain; }
         .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); position: relative; z-index: 2; }
         .slider::-webkit-slider-thumb:hover { background: #ff4444; box-shadow: 0 0 10px 2px rgba(255,68,68,.7); transform: scale(1.1); }
         .slider::-moz-range-thumb { width: 18px; height: 18px; background: #f0f0f0; border-radius: 50%; cursor: pointer; transition: all .3s ease; box-shadow: 0 0 6px 1px rgba(240,240,240,.3); border: none; z-index: 2; }
@@ -62,19 +61,37 @@
     <!-- Header & Timer -->
     <div class="container mx-auto px-0 py-0 max-w-xl flex justify-center">
         <div class="bg-custom p-0 w-full flex flex-col min-h-screen" style="padding-bottom: var(--main-bars-height);">
-            <h1 id="pageTitle" class="text-3xl md:text-4xl font-normal text-white mt-4 mb-4 text-center uppercase">FIGHTING INTERVAL TIMER</h1>
+            <h1 id="pageTitle" class="text-3xl md:text-4xl font-normal text-white mt-4 text-center uppercase" style="margin-bottom:0;padding-bottom:0;">FIGHTING INTERVAL TIMER</h1>
             <div id="contentArea" class="flex items-center justify-center flex-grow">
                 <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto aspect-square">
                     <div class="timer-circle-container">
                         <div id="timer-circle-bg" class="timer-circle-bg"></div>
                         <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 384 384" style="overflow: visible;">
                             <defs>
-                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                    <feGaussianBlur stdDeviation="4" result="blur" />
-                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                <!-- Multi-layered glow with screen blending for natural falloff -->
+                                <filter id="multiGlow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+                                    <!-- Variable inner glow (animated by JS) -->
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="varBlur" id="glowVar" />
+                                    <feColorMatrix in="varBlur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.85 0" result="v1"/>
+
+                                    <!-- Fixed wider halos -->
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="g8" />
+                                    <feColorMatrix in="g8" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.45 0" result="c8"/>
+
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="g20" />
+                                    <feColorMatrix in="g20" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.22 0" result="c20"/>
+
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="45" result="g45" />
+                                    <feColorMatrix in="g45" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.10 0" result="c45"/>
+
+                                    <!-- Screen blend layers progressively -->
+                                    <feBlend in="SourceGraphic" in2="v1" mode="screen" result="b1"/>
+                                    <feBlend in="b1" in2="c8" mode="screen" result="b2"/>
+                                    <feBlend in="b2" in2="c20" mode="screen" result="b3"/>
+                                    <feBlend in="b3" in2="c45" mode="screen" result="bFinal"/>
                                 </filter>
                             </defs>
-                            <circle class="progress-ring__circle" id="progress-ring-circle" stroke-width="3" fill="transparent" r="190" cx="192" cy="192" stroke-dasharray="1193.8" stroke-dashoffset="0" filter="url(#glow)" />
+                            <circle class="progress-ring__circle" id="progress-ring-circle" stroke-width="3" fill="transparent" r="190" cx="192" cy="192" stroke-dasharray="1193.8" stroke-dashoffset="0" filter="url(#multiGlow)" />
                         </svg>
                     </div>
                     <!-- Center overlay via translate to guarantee perfect centering -->
@@ -112,12 +129,11 @@
     <!-- SETTINGS OVERLAY: Pixel-perfect, full-screen, same width as main, bottom bar aligned -->
     <div id="settingsModal" class="fixed inset-0 hidden z-50 bg-custom overflow-hidden">
         <div class="max-w-xl mx-auto min-h-screen flex flex-col">
-            <!-- Header -->
-            <div id="settingsHeader" class="flex justify-center items-center p-6 pb-4">
-                <h2 class="text-xl font-bold uppercase">SETTINGS</h2>
-            </div>
-            <!-- Scrollable content -->
+            <!-- Scrollable content (header inside) -->
             <div id="modalScroll" class="flex-1 overflow-y-auto no-scrollbar modal-scroll px-6">
+                <div class="flex justify-center items-center p-6 pb-2">
+                    <h2 class="text-xl font-bold uppercase">SETTINGS</h2>
+                </div>
                 <div class="space-y-6 pb-4">
                     <!-- ROUND DURATION -->
                     <div class="space-y-3">
@@ -266,7 +282,7 @@
         }
 
         let animationId=null, glowFilter=null;
-        function startProgressAnimation(){ totalDurationMs = isPreparation ? prepDuration*1000 : (isWork ? roundDuration*1000 : restDuration*1000); timeLeftMs=timeLeft*1000; lastUpdateTime=performance.now(); if(animationId){cancelAnimationFrame(animationId);} glowFilter=document.querySelector('#glow feGaussianBlur'); function animate(timestamp){ if(!isRunning) return; const elapsed=timestamp-lastUpdateTime; lastUpdateTime=timestamp; timeLeftMs=Math.max(0,timeLeftMs-elapsed); const percent=(timeLeftMs/totalDurationMs)*100; const newTimeLeft=Math.ceil(timeLeftMs/1000); if(newTimeLeft!==timeLeft){ timeLeft=newTimeLeft; updateDisplay(); }
+        function startProgressAnimation(){ totalDurationMs = isPreparation ? prepDuration*1000 : (isWork ? roundDuration*1000 : restDuration*1000); timeLeftMs=timeLeft*1000; lastUpdateTime=performance.now(); if(animationId){cancelAnimationFrame(animationId);} glowFilter=document.querySelector('#multiGlow #glowVar'); function animate(timestamp){ if(!isRunning) return; const elapsed=timestamp-lastUpdateTime; lastUpdateTime=timestamp; timeLeftMs=Math.max(0,timeLeftMs-elapsed); const percent=(timeLeftMs/totalDurationMs)*100; const newTimeLeft=Math.ceil(timeLeftMs/1000); if(newTimeLeft!==timeLeft){ timeLeft=newTimeLeft; updateDisplay(); }
                 // Dinamik son uyarı eşiği
                 let warnSec = 0;
                 if (roundDuration >= 30) warnSec = 15; else if (roundDuration >= 20) warnSec = 10; else warnSec = 0;
@@ -284,19 +300,17 @@
         function countdown(){ if(timeLeft<=0){ clearInterval(timer); stopProgressAnimation(); isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); if(isPreparation){ stopPrepTick(); isPreparation=false; isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); if(isFirstWork){ playTripleBell(); isFirstWork=false; } else { playDoubleBell(); } startTimer(); } else if(isWork){ stopLast15(); // WORK -> REST : single bell
                 playSingleBell(); if(currentRound<totalRounds){ currentRound++; isWork=false; last15sWarningPlayed=false; timeLeft=restDuration; statusElement.textContent='REST'; updateDisplay(); startTimer(); } else { statusElement.textContent='FINISHED'; resetProgress(); playTripleBell(); } } else { // REST -> WORK : double bell
                 isWork=true; last15sWarningPlayed=false; stopLast15(); timeLeft=roundDuration; statusElement.textContent='WORK'; updateDisplay(true); playDoubleBell(); startTimer(); } } }
-        function stopTimer(){ isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); clearInterval(timer); stopProgressAnimation(); stopLast15(); stopPrepTick(); if(glowFilter){ glowFilter.setAttribute('stdDeviation','4'); } }
+        function stopTimer(){ isRunning=false; document.getElementById('start').textContent='START'; document.getElementById('start').classList.remove('active-button'); clearInterval(timer); stopProgressAnimation(); stopLast15(); stopPrepTick(); if(glowFilter){ glowFilter.setAttribute('stdDeviation','3'); } }
         function resetTimer(){ stopTimer(); isRunning=false; currentRound=1; isWork=false; isPreparation=true; isFirstWork=true; timeLeft=roundDuration; document.getElementById('start').textContent='START'; statusElement.textContent='GET READY'; resetProgress(); updateDisplay(); }
 
         function matchModalActionHeight(){
             const ref = document.getElementById('settingsBtn');
             const modal = document.getElementById('modalActionBar');
             const scrollArea = document.getElementById('modalScroll');
-            const header = document.getElementById('settingsHeader');
             if (!ref || !modal || !scrollArea) return;
             const h = Math.max(40, Math.round(ref.getBoundingClientRect().height));
             document.documentElement.style.setProperty('--action-bar-height', h + 'px');
-            const hh = header ? Math.round(header.getBoundingClientRect().height) : 56;
-            const maxH = `calc(100vh - ${h}px - ${hh}px - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
+            const maxH = `calc(100vh - ${h}px - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
             scrollArea.style.maxHeight = maxH;
         }
         function matchMainBarsHeight(){
@@ -330,18 +344,26 @@
             matchMainBarsHeight();
             reflowCenter();
             setupSliders(); setupSoundControls(); setupExtraButtons();
-            // Slider dokunmatiklerinde dikey scroll'u engelle
-            document.querySelectorAll('input[type="range"]').forEach(r=>{
-                r.addEventListener('touchstart', (e)=>{ e.stopPropagation(); }, { passive:true });
-                r.addEventListener('touchmove', (e)=>{ e.stopPropagation(); e.preventDefault(); }, { passive:false });
-            });
+            // Slider'lar pan-x'e izin veriyor; ek JS engeli yok
             // Scroll fallback (wheel + touch) for modal content
             const scrollArea = document.getElementById('modalScroll');
             if (scrollArea){
                 scrollArea.addEventListener('wheel', (e)=>{ scrollArea.scrollTop += e.deltaY; e.preventDefault(); }, { passive:false });
-                let tsY = 0;
-                scrollArea.addEventListener('touchstart', (e)=>{ if(e.touches && e.touches[0]) tsY = e.touches[0].clientY; }, { passive:true });
-                scrollArea.addEventListener('touchmove', (e)=>{ if(e.touches && e.touches[0]){ const dy = tsY - e.touches[0].clientY; scrollArea.scrollTop += dy; tsY = e.touches[0].clientY; e.preventDefault(); } }, { passive:false });
+                let tsY = 0; let isRangeTouch = false;
+                scrollArea.addEventListener('touchstart', (e)=>{
+                    if(e.touches && e.touches[0]) tsY = e.touches[0].clientY;
+                    const target = e.target;
+                    isRangeTouch = !!(target && target.closest && target.closest('input[type="range"]'));
+                }, { passive:true });
+                scrollArea.addEventListener('touchmove', (e)=>{
+                    if(isRangeTouch) return; // slider sürüklenirken dokunmayı engellemiyoruz
+                    if(e.touches && e.touches[0]){
+                        const dy = tsY - e.touches[0].clientY;
+                        scrollArea.scrollTop += dy;
+                        tsY = e.touches[0].clientY;
+                        e.preventDefault();
+                    }
+                }, { passive:false });
             }
             setTimeout(()=>{
                 createPresets('roundPresets',[60,120,180,240,300],roundDuration,'roundDuration');
